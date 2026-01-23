@@ -1,29 +1,50 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Leaf, Mail, Lock, Eye, EyeOff, Phone } from "lucide-react";
+import { Leaf, Lock, Eye, EyeOff, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-
 import { motion } from "framer-motion";
+import { useLoginMutation } from "@/Redux/Api/authApi";
+import { setCredentials } from "@/Redux/Slices/authSlice";
+import { useAppDispatch } from "@/Redux/Hooks/hooks";
+import type { LoginRequest } from "@/types/auth";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Login() {
   const navigate = useNavigate();
-  const [phone, setPhone] = useState("");
-  const [password, setPassword] = useState("");
+  const { toast } = useToast();
+  // const [phone, setPhone] = useState("");
+  // const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  // const [rememberMe, setRememberMe] = useState(false);
+  // const [isLoading, setIsLoading] = useState(false);
+
+  const dispatch = useAppDispatch();
+  const [login, { isLoading }] = useLoginMutation();
+
+  const [form, setForm] = useState<LoginRequest>({
+    phone: "",
+    password: "",
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
 
-    // Simulate login delay
-    setTimeout(() => {
-      setIsLoading(false);
-      navigate("/");
-    }, 1000);
+    try {
+      const res = await login(form).unwrap();
+      dispatch(setCredentials(res));
+      localStorage.setItem("tulip_tea_auth", JSON.stringify(res));
+      navigate("/", { replace: true });
+    } catch (err) {
+      toast({
+        variant: "destructive",
+        title: "Login Failed",
+        description:
+          err?.data?.detail || "Something went wrong. Please try again.",
+      });
+      console.error("Login failed:", err?.data?.detail);
+    }
   };
 
   return (
@@ -73,15 +94,9 @@ export default function Login() {
                   id="phone"
                   type="tel"
                   placeholder="03XXXXXXXXX"
-                  value={phone}
-                  onChange={(e) => {
-                    // allow only digits & max 11 chars
-                    const value = e.target.value
-                      .replace(/\D/g, "")
-                      .slice(0, 11);
-                    setPhone(value);
-                  }}
-                  pattern="03[0-9]{9}"
+                  value={form.phone}
+                  onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                  // pattern="03[0-9]{9}"
                   title="Enter a valid Pakistani phone number (e.g. 03175647123)"
                   className="pl-10 h-11 bg-muted/30 border-border focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200"
                   required
@@ -100,8 +115,10 @@ export default function Login() {
                   id="password"
                   type={showPassword ? "text" : "password"}
                   placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  value={form.password}
+                  onChange={(e) =>
+                    setForm({ ...form, password: e.target.value })
+                  }
                   className="pl-10 pr-10 h-11 bg-muted/30 border-border focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200"
                   required
                 />
@@ -120,7 +137,7 @@ export default function Login() {
             </div>
 
             {/* Remember Me & Forgot Password */}
-            <div className="flex items-center justify-between">
+            {/* <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Checkbox
                   id="remember"
@@ -143,7 +160,7 @@ export default function Login() {
               >
                 Forgot password?
               </a>
-            </div>
+            </div> */}
 
             {/* Submit Button */}
             <Button

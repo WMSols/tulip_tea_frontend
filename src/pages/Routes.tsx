@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, Edit2, Route as RouteIcon, Users } from "lucide-react";
+import { Plus, Edit2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/dashboard/DataTable";
 import { StatusBadge } from "@/components/dashboard/StatusBadge";
@@ -23,391 +23,234 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-
-interface RouteData {
-  id: string;
-  name: string;
-  code: string;
-  zone: string;
-  assignedStaff: string;
-  shops: number;
-  status: "active" | "inactive";
-  createdAt: string;
-}
-
-const initialRoutes: RouteData[] = [
-  {
-    id: "R001",
-    name: "North Route 1",
-    code: "NR-001",
-    zone: "Zone A - North",
-    assignedStaff: "Ali Hassan",
-    shops: 12,
-    status: "active",
-    createdAt: "2024-01-20",
-  },
-  {
-    id: "R002",
-    name: "North Route 2",
-    code: "NR-002",
-    zone: "Zone A - North",
-    assignedStaff: "Ahmed Khan",
-    shops: 15,
-    status: "active",
-    createdAt: "2024-01-22",
-  },
-  {
-    id: "R003",
-    name: "South Route 1",
-    code: "SR-001",
-    zone: "Zone B - South",
-    assignedStaff: "Imran Ali",
-    shops: 10,
-    status: "active",
-    createdAt: "2024-02-01",
-  },
-  {
-    id: "R004",
-    name: "Central Route 1",
-    code: "CR-001",
-    zone: "Zone C - Central",
-    assignedStaff: "Usman Malik",
-    shops: 18,
-    status: "active",
-    createdAt: "2024-02-05",
-  },
-  {
-    id: "R005",
-    name: "East Route 1",
-    code: "ER-001",
-    zone: "Zone D - East",
-    assignedStaff: "Unassigned",
-    shops: 8,
-    status: "inactive",
-    createdAt: "2024-02-10",
-  },
-];
-
-const zones = [
-  "Zone A - North",
-  "Zone B - South",
-  "Zone C - Central",
-  "Zone D - East",
-  "Zone E - West",
-];
-const staff = [
-  "Ali Hassan",
-  "Ahmed Khan",
-  "Imran Ali",
-  "Usman Malik",
-  "Farhan Ahmed",
-  "Bilal Shah",
-];
+import {
+  useGetRoutesQuery,
+  useCreateRouteMutation,
+  useDeleteRouteMutation,
+  useAssignRouteMutation,
+} from "@/Redux/Api/routesApi";
+import type { Route } from "@/types/routes";
+import { useAppSelector } from "@/Redux/Hooks/hooks";
 
 export default function Routes() {
-  const [routes, setRoutes] = useState<RouteData[]>(initialRoutes);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingRoute, setEditingRoute] = useState<RouteData | null>(null);
-  const [formData, setFormData] = useState({
-    name: "",
-    code: "",
-    zone: "",
-    assignedStaff: "",
-  });
   const { toast } = useToast();
 
-  const handleSubmit = () => {
-    if (editingRoute) {
-      setRoutes(
-        routes.map((r) =>
-          r.id === editingRoute.id ? { ...r, ...formData } : r,
-        ),
-      );
+  const distributorId = useAppSelector((state) => state.auth.user.id);
+
+  const [zoneId, setZoneId] = useState<number | undefined>();
+
+  const { data: routes = [], isLoading } = useGetRoutesQuery(
+    zoneId
+      ? { filterType: "zone", filterId: zoneId }
+      : { filterType: "distributor", filterId: distributorId },
+  );
+
+  const [createRoute, { isLoading: isCreating }] = useCreateRouteMutation();
+  const [deleteRoute, { isLoading: isDeleting }] = useDeleteRouteMutation();
+  const [assignRoute] = useAssignRouteMutation();
+
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [formData, setFormData] = useState({
+    name: "",
+    zone_id: "",
+    order_booker_id: "",
+  });
+
+  const handleSubmit = async () => {
+    try {
+      const res = await createRoute({
+        distributor_id: distributorId,
+        body: {
+          name: formData.name,
+          zone_id: Number(formData.zone_id),
+        },
+      }).unwrap();
+      console.log(res);
+
+      toast({ title: "Route Created" });
+
+      setIsDialogOpen(false);
+      setFormData({ name: "", zone_id: "", order_booker_id: "" });
+    } catch {
       toast({
-        title: "Route Updated",
-        description: "Route has been updated successfully.",
-      });
-    } else {
-      const newRoute: RouteData = {
-        id: `R${String(routes.length + 1).padStart(3, "0")}`,
-        name: formData.name,
-        code: formData.code,
-        zone: formData.zone,
-        assignedStaff: formData.assignedStaff || "Unassigned",
-        shops: 0,
-        status: "active",
-        createdAt: new Date().toISOString().split("T")[0],
-      };
-      setRoutes([...routes, newRoute]);
-      toast({
-        title: "Route Created",
-        description: "New route has been created successfully.",
+        title: "Error",
+        description: "Failed to create route",
+        variant: "destructive",
       });
     }
-    setIsDialogOpen(false);
-    setEditingRoute(null);
-    setFormData({ name: "", code: "", zone: "", assignedStaff: "" });
   };
 
-  const handleEdit = (route: RouteData) => {
-    setEditingRoute(route);
-    setFormData({
-      name: route.name,
-      code: route.code,
-      zone: route.zone,
-      assignedStaff: route.assignedStaff,
-    });
-    setIsDialogOpen(true);
+  const handleDelete = async (id: number) => {
+    try {
+      await deleteRoute(id).unwrap();
+      toast({ title: "Route Deleted" });
+    } catch {
+      toast({
+        title: "Error",
+        description: "Failed to delete route",
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleDelete = (id: string) => {
-    setRoutes(routes.filter((r) => r.id !== id));
-    toast({
-      title: "Route Deleted",
-      description: "Route has been removed.",
-      variant: "destructive",
-    });
+  const handleAssign = async (route: Route) => {
+    if (!formData.order_booker_id) return;
+
+    try {
+      await assignRoute({
+        route_id: route.id,
+        order_booker_id: Number(formData.order_booker_id),
+      }).unwrap();
+
+      toast({ title: "Route Assigned" });
+    } catch {
+      toast({
+        title: "Error",
+        description: "Failed to assign route",
+        variant: "destructive",
+      });
+    }
   };
 
   const columns = [
-    { key: "code", label: "Code", sortable: true },
+    { key: "id", label: "ID", sortable: true },
     { key: "name", label: "Route Name", sortable: true },
     {
-      key: "zone",
+      key: "zone_id",
       label: "Zone",
-      render: (route: RouteData) => (
-        <StatusBadge status="info" label={route.zone.split(" - ")[0]} />
+      render: (r: Route) => (
+        <StatusBadge status="info" label={`Zone ${r.zone_id}`} />
       ),
     },
     {
-      key: "assignedStaff",
-      label: "Assigned Staff",
-      render: (route: RouteData) => (
-        <span
-          className={
-            route.assignedStaff === "Unassigned"
-              ? "text-muted-foreground italic"
-              : "font-medium"
-          }
-        >
-          {route.assignedStaff}
-        </span>
-      ),
+      key: "order_booker_id",
+      label: "Order Booker",
+      render: (r: Route) =>
+        r.order_booker_id ? (
+          <span className="font-medium">OB #{r.order_booker_id}</span>
+        ) : (
+          <span className="text-muted-foreground italic">Unassigned</span>
+        ),
     },
     {
-      key: "shops",
-      label: "Shops",
-      render: (route: RouteData) => (
-        <span className="font-medium">{route.shops}</span>
-      ),
-    },
-    {
-      key: "status",
-      label: "Status",
-      render: (route: RouteData) => (
-        <StatusBadge
-          status={route.status === "active" ? "success" : "neutral"}
-          label={route.status === "active" ? "Active" : "Inactive"}
-        />
-      ),
+      key: "created_at",
+      label: "Created",
+      render: (r: Route) => new Date(r.created_at).toLocaleDateString(),
     },
   ];
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <span className="loader" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      {/* Header + Filters */}
+      <div className="flex flex-wrap items-end gap-3 justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Routes</h1>
-          <p className="text-muted-foreground text-sm">
-            Manage delivery routes and staff assignments
+          <h1 className="text-2xl font-bold">Routes</h1>
+          <p className="text-sm text-muted-foreground">
+            Manage delivery routes
           </p>
         </div>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button
-              className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
-              onClick={() => {
-                setEditingRoute(null);
-                setFormData({
-                  name: "",
-                  code: "",
-                  zone: "",
-                  assignedStaff: "",
-                });
-              }}
-            >
-              <Plus className="w-4 h-4" />
-              Add Route
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="bg-card border-border">
-            <DialogHeader>
-              <DialogTitle className=" ">
-                {editingRoute ? "Edit Route" : "Create New Route"}
-              </DialogTitle>
-              <DialogDescription>
-                {editingRoute
-                  ? "Update route details below."
-                  : "Fill in the details to create a new route."}
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4 py-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Route Name</Label>
-                  <Input
-                    id="name"
-                    placeholder="e.g., North Route 1"
-                    value={formData.name}
-                    onChange={(e) =>
-                      setFormData({ ...formData, name: e.target.value })
-                    }
-                    className="bg-background border-border"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="code">Route Code</Label>
-                  <Input
-                    id="code"
-                    placeholder="e.g., NR-001"
-                    value={formData.code}
-                    onChange={(e) =>
-                      setFormData({ ...formData, code: e.target.value })
-                    }
-                    className="bg-background border-border"
-                  />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label>Zone</Label>
-                <Select
-                  value={formData.zone}
-                  onValueChange={(value) =>
-                    setFormData({ ...formData, zone: value })
-                  }
-                >
-                  <SelectTrigger className="bg-background border-border">
-                    <SelectValue placeholder="Select zone" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-card border-border">
-                    {zones.map((zone) => (
-                      <SelectItem key={zone} value={zone}>
-                        {zone}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Assign Order Booker</Label>
-                <Select
-                  value={formData.assignedStaff}
-                  onValueChange={(value) =>
-                    setFormData({ ...formData, assignedStaff: value })
-                  }
-                >
-                  <SelectTrigger className="bg-background border-border">
-                    <SelectValue placeholder="Select staff member" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-card border-border">
-                    {staff.map((s) => (
-                      <SelectItem key={s} value={s}>
-                        {s}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-                Cancel
-              </Button>
-              <Button
-                onClick={handleSubmit}
-                className="bg-primary text-primary-foreground"
-              >
-                {editingRoute ? "Update Route" : "Create Route"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </div>
 
-      {/* Stats Summary */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="stat-card">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-primary/10">
-              <RouteIcon className="w-5 h-5 text-primary" />
-            </div>
-            <div>
-              <p className="text-2xl   font-bold">{routes.length}</p>
-              <p className="text-sm text-muted-foreground">Total Routes</p>
-            </div>
-          </div>
-        </div>
-        <div className="stat-card">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-success/10">
-              <RouteIcon className="w-5 h-5 text-success" />
-            </div>
-            <div>
-              <p className="text-2xl   font-bold">
-                {routes.filter((r) => r.status === "active").length}
-              </p>
-              <p className="text-sm text-muted-foreground">Active</p>
-            </div>
-          </div>
-        </div>
-        <div className="stat-card">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-warning/10">
-              <Users className="w-5 h-5 text-warning" />
-            </div>
-            <div>
-              <p className="text-2xl   font-bold">
-                {routes.filter((r) => r.assignedStaff === "Unassigned").length}
-              </p>
-              <p className="text-sm text-muted-foreground">Unassigned</p>
-            </div>
-          </div>
-        </div>
-        <div className="stat-card">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-accent/10">
-              <RouteIcon className="w-5 h-5 text-accent" />
-            </div>
-            <div>
-              <p className="text-2xl   font-bold">
-                {routes.reduce((acc, r) => acc + r.shops, 0)}
-              </p>
-              <p className="text-sm text-muted-foreground">Total Shops</p>
-            </div>
-          </div>
+        {/* Filters + Add button */}
+        <div className="flex flex-wrap items-end gap-3 w-full sm:w-auto">
+          <Input
+            type="number"
+            placeholder="Enter Zone ID..."
+            value={zoneId ?? ""}
+            onChange={(e) =>
+              setZoneId(e.target.value ? Number(e.target.value) : undefined)
+            }
+            className="w-40"
+          />
+
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button disabled={isCreating} className="ml-0 sm:ml-2">
+                <Plus className="w-4 h-4 mr-1" /> Add Route
+              </Button>
+            </DialogTrigger>
+
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Create Route</DialogTitle>
+                <DialogDescription>
+                  Fill details to create a new route
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="space-y-4 py-4">
+                <Label>Route Name</Label>
+                <Input
+                  value={formData.name}
+                  onChange={(e) =>
+                    setFormData({ ...formData, name: e.target.value })
+                  }
+                />
+
+                <Label>Zone ID</Label>
+                <Input
+                  type="number"
+                  value={formData.zone_id}
+                  onChange={(e) =>
+                    setFormData({ ...formData, zone_id: e.target.value })
+                  }
+                />
+
+                <Label>Assign Order Booker (optional)</Label>
+                <Input
+                  type="number"
+                  value={formData.order_booker_id}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      order_booker_id: e.target.value,
+                    })
+                  }
+                />
+              </div>
+
+              <DialogFooter>
+                <Button
+                  variant="outline"
+                  onClick={() => setIsDialogOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button onClick={handleSubmit} disabled={isCreating}>
+                  {isCreating ? "Creating..." : "Create Route"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
 
-      {/* Data Table */}
+      {/* Table */}
       <DataTable
         data={routes}
         columns={columns}
-        searchPlaceholder="Search routes..."
         actions={(route) => (
           <div className="flex items-center gap-1">
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => handleEdit(route)}
-              className="edit-btn-hover text-muted-foreground"
+              onClick={() => handleAssign(route)}
             >
               <Edit2 className="w-4 h-4" />
             </Button>
+
             <DeleteConfirmDialog
               onConfirm={() => handleDelete(route.id)}
               title="Delete Route?"
               description="This will permanently delete this route."
+              loading={isDeleting}
             />
           </div>
         )}

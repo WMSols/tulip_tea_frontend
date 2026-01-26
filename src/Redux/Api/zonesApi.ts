@@ -28,6 +28,15 @@ export const zonesApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: [{ type: "Zones" as const, id: "LIST" }],
     }),
+    updateZone: builder.mutation<Zone, { id: number; body: CreateZoneDTO }>({
+      query: ({ id, body }) => ({
+        url: `/zones/${id}`,
+        method: "PUT",
+        body,
+      }),
+      invalidatesTags: [{ type: "Zones", id: "LIST" }],
+    }),
+
     deleteZone: builder.mutation<void, number>({
       query: (zone_id) => ({
         url: `/zones/${zone_id}`,
@@ -43,5 +52,6 @@ export const {
   useGetZonesQuery,
   useGetZoneByIdQuery,
   useCreateZoneMutation,
+  useUpdateZoneMutation,
   useDeleteZoneMutation,
 } = zonesApi;

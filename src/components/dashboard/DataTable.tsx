@@ -16,12 +16,14 @@ interface DataTableProps<T> {
   data: T[];
   columns: Column<T>[];
   actions?: (item: T) => React.ReactNode;
+  getRowKey?: (item: T) => string;
 }
 
 export function DataTable<T extends { id: string | number }>({
   data,
   columns,
   actions,
+  getRowKey,
 }: DataTableProps<T>) {
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
@@ -78,7 +80,10 @@ export function DataTable<T extends { id: string | number }>({
 
           <tbody>
             {data.map((item) => (
-              <tr key={item.id} className="hover:bg-muted/30 transition-colors">
+              <tr
+                key={getRowKey ? getRowKey(item) : String(item.id)}
+                className="hover:bg-muted/30 transition-colors"
+              >
                 {columns.map((column) => (
                   <td
                     key={String(column.key)}

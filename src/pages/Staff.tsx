@@ -476,6 +476,7 @@ export default function Staff() {
       <DataTable
         data={filteredStaff}
         columns={columns}
+        getRowKey={(row) => `${row.role}-${row.id}`}
         actions={(staff: StaffMemberUI) => (
           <div className="flex items-center gap-1">
             <Button

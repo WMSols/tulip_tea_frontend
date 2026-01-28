@@ -1,3 +1,5 @@
+// types/routes.ts
+
 export interface Route {
   id: number;
   name: string;
@@ -10,6 +12,13 @@ export interface Route {
 export interface CreateRouteRequest {
   name: string;
   zone_id: number;
+  order_booker_id?: number;
+}
+
+export interface UpdateRouteRequest {
+  name: string;
+  zone_id: number;
+  order_booker_id?: number;
 }
 
 export interface AssignRouteRequest {
@@ -20,6 +29,6 @@ export interface AssignRouteRequest {
 export type RouteFilterType = "distributor" | "zone";
 
 export interface GetRoutesArgs {
-  filterType?: "distributor" | "zone"; // optional now
+  filterType?: RouteFilterType;
   filterId?: number;
 }

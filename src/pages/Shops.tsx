@@ -57,6 +57,7 @@ export default function Shops() {
   const { data: orderBookers = [] } = useGetOrderBookersByDistributorQuery({
     distributor_id: distributorId,
   });
+  console.log(allShops);
 
   const { data: zones = [], isLoading: isLoadingZones } = useGetZonesQuery();
 
@@ -104,7 +105,12 @@ export default function Shops() {
 
     zone: zoneMap[shop.zone_id] || `Zone ${shop.zone_id}`,
 
-    route: shop.route?.route_name ?? "-",
+    routes:
+      shop.routes?.map((r) => ({
+        id: r.route_id,
+        name: r.route_name,
+        sequence: r.sequence,
+      })) ?? [],
 
     gps: `${shop.gps_lat},${shop.gps_lng}`,
     creditLimit: shop.credit_limit,
@@ -138,7 +144,7 @@ export default function Shops() {
       });
 
       setIsViewDialogOpen(false);
-    } catch {
+    } catch (error: any) {
       toast({
         title: "Error",
         description: "Failed to approve shop.",
@@ -165,7 +171,7 @@ export default function Shops() {
       });
 
       setIsViewDialogOpen(false);
-    } catch {
+    } catch (error: any) {
       toast({
         title: "Error",
         description: "Failed to reject shop.",
@@ -191,7 +197,7 @@ export default function Shops() {
       setIsReassignOpen(false);
       setSelectedOrderBookerId(null);
       setSelectedShop(null);
-    } catch {
+    } catch (error: any) {
       toast({
         title: "Error",
         description: "Failed to reassign shop.",
@@ -226,7 +232,29 @@ export default function Shops() {
       label: "Zone",
       render: (shop: UiShop) => <StatusBadge status="info" label={shop.zone} />,
     },
-    { key: "route", label: "Route", className: "hidden lg:table-cell" },
+    {
+      key: "routes",
+      label: "Routes",
+      className: "hidden lg:table-cell",
+      render: (shop: UiShop) => {
+        if (!shop.routes.length) return "-";
+
+        return (
+          <div className="flex flex-wrap gap-1">
+            {shop.routes
+              .sort((a, b) => a.sequence - b.sequence)
+              .map((route) => (
+                <span
+                  key={route.id}
+                  className="px-2 py-0.5 text-xs rounded bg-blue-100 text-blue-700"
+                >
+                  {route.name}
+                </span>
+              ))}
+          </div>
+        );
+      },
+    },
     {
       key: "balance",
       label: "Balance",
@@ -461,7 +489,8 @@ export default function Shops() {
                 <div className="space-y-1">
                   <p className="text-sm text-muted-foreground">Zone / Route</p>
                   <p className="font-medium">
-                    {selectedShop.zone} / {selectedShop.route}
+                    {selectedShop.zone} /{" "}
+                    {selectedShop.routes.map((r) => r.name).join(", ")}
                   </p>
                 </div>
                 <div className="space-y-1">

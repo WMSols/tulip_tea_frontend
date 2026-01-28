@@ -1,3 +1,13 @@
+export interface ApiShopRoute {
+  route_id: number;
+  route_name: string;
+  route_zone_id: number;
+  route_zone_name: string;
+  order_booker_id: number | null;
+  order_booker_name: string | null;
+  sequence: number;
+}
+
 export interface ApiShop {
   id: number;
   name: string;
@@ -17,7 +27,7 @@ export interface ApiShop {
   created_by_order_booker_name: string;
   assigned_to_order_booker: number;
   assigned_to_order_booker_name: string;
-  routes: string[];
+  routes: ApiShopRoute[];
   owner_cnic_front_photo: string;
   owner_cnic_back_photo: string;
   shop_exterior_photo: string;
@@ -44,7 +54,11 @@ export interface UiShop {
   ownerName: string;
   phone: string;
   zone: string;
-  route: string;
+  routes: {
+    id: number;
+    name: string;
+    sequence: number;
+  }[];
   gps: string;
   creditLimit: number;
   balance: number;

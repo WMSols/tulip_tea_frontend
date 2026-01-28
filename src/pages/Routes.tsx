@@ -13,13 +13,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
@@ -28,17 +21,17 @@ import {
   useCreateRouteMutation,
   useDeleteRouteMutation,
   useAssignRouteMutation,
+  useUpdateRouteMutation,
 } from "@/Redux/Api/routesApi";
 import type { Route } from "@/types/routes";
 import { useAppSelector } from "@/Redux/Hooks/hooks";
+import type { CreateRouteRequest, UpdateRouteRequest } from "@/types/routes";
 
 export default function Routes() {
   const { toast } = useToast();
-
-  const distributorId = useAppSelector((state) => state.auth.user.id);
+  const distributorId = useAppSelector((s) => s.auth.user.id);
 
   const [zoneId, setZoneId] = useState<number | undefined>();
-
   const { data: routes = [], isLoading } = useGetRoutesQuery(
     zoneId
       ? { filterType: "zone", filterId: zoneId }
@@ -46,67 +39,82 @@ export default function Routes() {
   );
 
   const [createRoute, { isLoading: isCreating }] = useCreateRouteMutation();
+  const [updateRoute, { isLoading: isUpdating }] = useUpdateRouteMutation();
   const [deleteRoute, { isLoading: isDeleting }] = useDeleteRouteMutation();
   const [assignRoute] = useAssignRouteMutation();
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingRoute, setEditingRoute] = useState<Route | null>(null);
+
   const [formData, setFormData] = useState({
     name: "",
     zone_id: "",
     order_booker_id: "",
   });
 
+  const openCreateDialog = () => {
+    setEditingRoute(null);
+    setFormData({ name: "", zone_id: "", order_booker_id: "" });
+    setIsDialogOpen(true);
+  };
+
+  const openEditDialog = (route: Route) => {
+    setEditingRoute(route);
+    setFormData({
+      name: route.name,
+      zone_id: String(route.zone_id),
+      order_booker_id: route.order_booker_id
+        ? String(route.order_booker_id)
+        : "",
+    });
+    setIsDialogOpen(true);
+  };
+
   const handleSubmit = async () => {
     try {
-      const res = await createRoute({
-        distributor_id: distributorId,
-        body: {
-          name: formData.name,
-          zone_id: Number(formData.zone_id),
-        },
-      }).unwrap();
-      console.log(res);
+      const body: CreateRouteRequest | UpdateRouteRequest = {
+        name: formData.name,
+        zone_id: Number(formData.zone_id),
 
-      toast({ title: "Route Created" });
+        ...(formData.order_booker_id && {
+          order_booker_id: Number(formData.order_booker_id),
+        }),
+      };
+
+      if (editingRoute) {
+        const res = await updateRoute({
+          route_id: editingRoute.id,
+          body: body as UpdateRouteRequest,
+        }).unwrap();
+        toast({ title: "Route Updated" });
+      } else {
+        await createRoute({
+          distributor_id: distributorId,
+          body: body as CreateRouteRequest,
+        }).unwrap();
+        toast({ title: "Route Created" });
+      }
 
       setIsDialogOpen(false);
-      setFormData({ name: "", zone_id: "", order_booker_id: "" });
-    } catch {
+    } catch (error: any) {
+      console.log(error);
       toast({
         title: "Error",
-        description: "Failed to create route",
+        description: error?.data?.detail || "Operation failed",
         variant: "destructive",
       });
     }
   };
 
-  const handleDelete = async (id: number) => {
+  const handleDeleteRoute = async (routeId: number) => {
     try {
-      await deleteRoute(id).unwrap();
+      await deleteRoute(routeId).unwrap();
       toast({ title: "Route Deleted" });
-    } catch {
+    } catch (error: any) {
+      console.error("Delete route error:", error);
       toast({
         title: "Error",
-        description: "Failed to delete route",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleAssign = async (route: Route) => {
-    if (!formData.order_booker_id) return;
-
-    try {
-      await assignRoute({
-        route_id: route.id,
-        order_booker_id: Number(formData.order_booker_id),
-      }).unwrap();
-
-      toast({ title: "Route Assigned" });
-    } catch {
-      toast({
-        title: "Error",
-        description: "Failed to assign route",
+        description: error?.data?.detail || "Failed to delete route",
         variant: "destructive",
       });
     }
@@ -126,43 +134,18 @@ export default function Routes() {
       key: "order_booker_id",
       label: "Order Booker",
       render: (r: Route) =>
-        r.order_booker_id ? (
-          <span className="font-medium">OB #{r.order_booker_id}</span>
-        ) : (
-          <span className="text-muted-foreground italic">Unassigned</span>
-        ),
-    },
-    {
-      key: "created_at",
-      label: "Created",
-      render: (r: Route) => new Date(r.created_at).toLocaleDateString(),
+        r.order_booker_id ? `OB #${r.order_booker_id}` : "Unassigned",
     },
   ];
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <span className="loader" />
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* Header + Filters */}
-      <div className="flex flex-wrap items-end gap-3 justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Routes</h1>
-          <p className="text-sm text-muted-foreground">
-            Manage delivery routes
-          </p>
-        </div>
-
-        {/* Filters + Add button */}
-        <div className="flex flex-wrap items-end gap-3 w-full sm:w-auto">
+      <div className="flex justify-between">
+        <h1 className="text-2xl font-bold">Routes</h1>
+        <div className="flex items-center gap-2">
           <Input
             type="number"
-            placeholder="Enter Zone ID..."
+            placeholder="Filter by Zone ID"
             value={zoneId ?? ""}
             onChange={(e) =>
               setZoneId(e.target.value ? Number(e.target.value) : undefined)
@@ -170,91 +153,93 @@ export default function Routes() {
             className="w-40"
           />
 
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button disabled={isCreating} className="ml-0 sm:ml-2">
-                <Plus className="w-4 h-4 mr-1" /> Add Route
-              </Button>
-            </DialogTrigger>
-
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Create Route</DialogTitle>
-                <DialogDescription>
-                  Fill details to create a new route
-                </DialogDescription>
-              </DialogHeader>
-
-              <div className="space-y-4 py-4">
-                <Label>Route Name</Label>
-                <Input
-                  value={formData.name}
-                  onChange={(e) =>
-                    setFormData({ ...formData, name: e.target.value })
-                  }
-                />
-
-                <Label>Zone ID</Label>
-                <Input
-                  type="number"
-                  value={formData.zone_id}
-                  onChange={(e) =>
-                    setFormData({ ...formData, zone_id: e.target.value })
-                  }
-                />
-
-                <Label>Assign Order Booker (optional)</Label>
-                <Input
-                  type="number"
-                  value={formData.order_booker_id}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      order_booker_id: e.target.value,
-                    })
-                  }
-                />
-              </div>
-
-              <DialogFooter>
-                <Button
-                  variant="outline"
-                  onClick={() => setIsDialogOpen(false)}
-                >
-                  Cancel
-                </Button>
-                <Button onClick={handleSubmit} disabled={isCreating}>
-                  {isCreating ? "Creating..." : "Create Route"}
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+          <Button onClick={openCreateDialog}>
+            <Plus className="w-4 h-4 mr-1" /> Add Route
+          </Button>
         </div>
       </div>
 
-      {/* Table */}
       <DataTable
         data={routes}
         columns={columns}
         actions={(route) => (
-          <div className="flex items-center gap-1">
+          <div className="flex gap-1">
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => handleAssign(route)}
+              onClick={() => openEditDialog(route)}
             >
               <Edit2 className="w-4 h-4" />
             </Button>
 
             <DeleteConfirmDialog
-              onConfirm={() => handleDelete(route.id)}
-              title="Delete Route?"
-              description="This will permanently delete this route."
+              onConfirm={() => handleDeleteRoute(route.id)}
               loading={isDeleting}
             />
           </div>
         )}
       />
+
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {editingRoute ? "Update Route" : "Create Route"}
+            </DialogTitle>
+            <DialogDescription>
+              {editingRoute
+                ? "Update route details"
+                : "Fill details to create a route"}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <Label>Route Name</Label>
+            <Input
+              value={formData.name}
+              onChange={(e) =>
+                setFormData({ ...formData, name: e.target.value })
+              }
+            />
+
+            <Label>Zone ID</Label>
+            <Input
+              type="number"
+              value={formData.zone_id}
+              onChange={(e) =>
+                setFormData({ ...formData, zone_id: e.target.value })
+              }
+            />
+
+            <Label>Order Booker ID</Label>
+            <Input
+              type="number"
+              value={formData.order_booker_id}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  order_booker_id: e.target.value,
+                })
+              }
+            />
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleSubmit} disabled={isCreating || isUpdating}>
+              {editingRoute
+                ? isUpdating
+                  ? "Updating..."
+                  : "Update Route"
+                : isCreating
+                  ? "Creating..."
+                  : "Create Route"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

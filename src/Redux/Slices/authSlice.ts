@@ -1,13 +1,14 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { AuthState, AuthResponse } from "@/types/auth";
 
-const storedAuth = localStorage.getItem("tulip_tea_auth");
+const STORAGE_KEY = "tulip_tea_auth";
+const storedAuth = localStorage.getItem(STORAGE_KEY);
 const authUser = storedAuth ? JSON.parse(storedAuth) : null;
 
 const initialState: AuthState = {
   user: authUser?.user || null,
-  token: authUser?.token || null,
-  isAuthenticated: !!authUser?.token,
+  token: authUser?.access_token || null,
+  isAuthenticated: !!authUser?.access_token,
 };
 
 const authSlice = createSlice({
@@ -24,6 +25,7 @@ const authSlice = createSlice({
       state.user = null;
       state.token = null;
       state.isAuthenticated = false;
+      localStorage.removeItem(STORAGE_KEY);
     },
   },
 });

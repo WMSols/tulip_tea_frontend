@@ -7,8 +7,8 @@ import {
 
 export const creditLimitApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    getPendingCreditLimitRequests: builder.query<CreditLimitRequest[], void>({
-      query: () => "/credit-limit-requests/pending",
+    getAllCreditLimitRequests: builder.query<CreditLimitRequest[], void>({
+      query: () => "/credit-limit-requests/all",
       providesTags: ["CreditLimitRequests"],
     }),
 
@@ -59,7 +59,7 @@ export const creditLimitApi = baseApi.injectEndpoints({
 });
 
 export const {
-  useGetPendingCreditLimitRequestsQuery,
+  useGetAllCreditLimitRequestsQuery,
   useApproveCreditLimitRequestMutation,
   useRejectCreditLimitRequestMutation,
 } = creditLimitApi;

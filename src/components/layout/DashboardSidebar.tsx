@@ -29,7 +29,7 @@ const menuItems = [
   { icon: CreditCard, label: "Credit", path: "/credit" },
   { icon: Warehouse, label: "Warehouses", path: "/warehouses" },
   { icon: Package, label: "Products", path: "/products" },
-  // { icon: ClipboardCheck, label: "Visits", path: "/visits" },
+  { icon: ClipboardCheck, label: "Visits", path: "/visits" },
 ];
 
 export function DashboardSidebar({ isOpen, onToggle }: SidebarProps) {

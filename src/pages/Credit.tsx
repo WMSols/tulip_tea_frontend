@@ -6,6 +6,7 @@ import {
   CreditCard,
   TrendingUp,
   Store,
+  Eye,
   Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -26,7 +27,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAppSelector } from "@/Redux/Hooks/hooks";
 
 import {
-  useGetPendingCreditLimitRequestsQuery,
+  useGetAllCreditLimitRequestsQuery,
   useApproveCreditLimitRequestMutation,
   useRejectCreditLimitRequestMutation,
 } from "@/Redux/Api/creditLimitApi";
@@ -36,7 +37,7 @@ export default function Credit() {
   const distributorId = useAppSelector((s) => s.auth.user.id); // TODO: get from auth slice
   const { toast } = useToast();
 
-  const { data = [], isLoading } = useGetPendingCreditLimitRequestsQuery();
+  const { data = [], isLoading } = useGetAllCreditLimitRequestsQuery();
   console.log(data);
 
   const [approveRequest, { isLoading: approving }] =
@@ -45,17 +46,22 @@ export default function Credit() {
     useRejectCreditLimitRequestMutation();
 
   const [activeTab, setActiveTab] = useState<
-    "all" | "pending" | "approved" | "rejected"
+    "all" | "pending" | "approved" | "disapproved"
   >("all");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedRequest, setSelectedRequest] =
     useState<CreditLimitRequest | null>(null);
-  const [actionType, setActionType] = useState<"approve" | "reject">("approve");
+  const [actionType, setActionType] = useState<"approve" | "disapproved">(
+    "approve",
+  );
   const [remarks, setRemarks] = useState("");
+  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
+  const [viewRemarks, setViewRemarks] = useState<string>("");
+  const [viewShop, setViewShop] = useState<string>("");
 
   const handleAction = (
     request: CreditLimitRequest,
-    type: "approve" | "reject",
+    type: "approve" | "disapproved",
   ) => {
     setSelectedRequest(request);
     setActionType(type);
@@ -138,6 +144,40 @@ export default function Credit() {
         />
       ),
     },
+    {
+      key: "remarks",
+      label: "Remarks",
+      render: (r: CreditLimitRequest) => {
+        if (r.status === "pending") {
+          return <span className="text-muted-foreground">-</span>;
+        }
+
+        if (!r.remarks) {
+          return (
+            <span className="text-muted-foreground text-sm">No remarks</span>
+          );
+        }
+
+        return (
+          <div className="flex items-center justify-between w-[220px]">
+            <span className="text-sm truncate pr-2">{r.remarks}</span>
+
+            <Button
+              size="icon"
+              variant="ghost"
+              className="shrink-0"
+              onClick={() => {
+                setViewRemarks(r.remarks || "");
+                setViewShop(r.shop_name);
+                setIsViewDialogOpen(true);
+              }}
+            >
+              <Eye className="w-4 h-4" />
+            </Button>
+          </div>
+        );
+      },
+    },
   ];
 
   return (
@@ -151,7 +191,7 @@ export default function Credit() {
             Pending {pendingCount > 0 && `(${pendingCount})`}
           </TabsTrigger>
           <TabsTrigger value="approved">Approved</TabsTrigger>
-          <TabsTrigger value="rejected">Rejected</TabsTrigger>
+          <TabsTrigger value="disapproved">Disapproved</TabsTrigger>
         </TabsList>
       </Tabs>
 
@@ -171,7 +211,7 @@ export default function Credit() {
               <Button
                 size="icon"
                 variant="ghost"
-                onClick={() => handleAction(request, "reject")}
+                onClick={() => handleAction(request, "disapproved")}
               >
                 <XCircle className="w-4 h-4 text-destructive" />
               </Button>
@@ -209,6 +249,24 @@ export default function Credit() {
               )}
               {actionType === "approve" ? "Approve" : "Reject"}
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* View Remarks */}
+      <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Remarks</DialogTitle>
+            <DialogDescription>{viewShop}</DialogDescription>
+          </DialogHeader>
+
+          <div className="bg-muted p-3 rounded-md text-sm whitespace-pre-wrap">
+            {viewRemarks}
+          </div>
+
+          <DialogFooter>
+            <Button onClick={() => setIsViewDialogOpen(false)}>Close</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -13,6 +13,13 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
@@ -23,13 +30,23 @@ import {
   useAssignRouteMutation,
   useUpdateRouteMutation,
 } from "@/Redux/Api/routesApi";
+import { useGetZonesQuery } from "@/Redux/Api/zonesApi";
+import { useGetOrderBookersByDistributorQuery } from "@/Redux/Api/orderBookerApi";
 import type { Route } from "@/types/routes";
 import { useAppSelector } from "@/Redux/Hooks/hooks";
 import type { CreateRouteRequest, UpdateRouteRequest } from "@/types/routes";
+import { Zone } from "@/types/zones";
+import { OrderBooker } from "@/types/staff";
 
 export default function Routes() {
   const { toast } = useToast();
   const distributorId = useAppSelector((s) => s.auth.user.id);
+
+  const { data: zones = [], isLoading: isLoadingZones } = useGetZonesQuery();
+
+  const { data: orderBookers = [] } = useGetOrderBookersByDistributorQuery({
+    distributor_id: distributorId,
+  });
 
   const [zoneId, setZoneId] = useState<number | undefined>();
   const { data: routes = [], isLoading } = useGetRoutesQuery(
@@ -51,6 +68,14 @@ export default function Routes() {
     zone_id: "",
     order_booker_id: "",
   });
+
+  const zoneMap = new Map<number, string>(
+    zones.map((z: Zone) => [z.id, z.name]),
+  );
+
+  const orderBookerMap = new Map<number, string>(
+    orderBookers.map((ob: OrderBooker) => [ob.id, ob.name]),
+  );
 
   const openCreateDialog = () => {
     setEditingRoute(null);
@@ -122,19 +147,28 @@ export default function Routes() {
 
   const columns = [
     { key: "id", label: "ID", sortable: true },
+
     { key: "name", label: "Route Name", sortable: true },
+
     {
       key: "zone_id",
       label: "Zone",
       render: (r: Route) => (
-        <StatusBadge status="info" label={`Zone ${r.zone_id}`} />
+        <StatusBadge
+          status="info"
+          label={zoneMap.get(r.zone_id) ?? `Zone ${r.zone_id}`}
+        />
       ),
     },
+
     {
       key: "order_booker_id",
       label: "Order Booker",
       render: (r: Route) =>
-        r.order_booker_id ? `OB #${r.order_booker_id}` : "Unassigned",
+        r.order_booker_id
+          ? (orderBookerMap.get(r.order_booker_id) ??
+            `OB #${r.order_booker_id}`)
+          : "Unassigned",
     },
   ];
 
@@ -202,26 +236,49 @@ export default function Routes() {
               }
             />
 
-            <Label>Zone ID</Label>
-            <Input
-              type="number"
+            <Label>Zone</Label>
+            <Select
               value={formData.zone_id}
-              onChange={(e) =>
-                setFormData({ ...formData, zone_id: e.target.value })
+              onValueChange={(value) =>
+                setFormData({ ...formData, zone_id: value })
               }
-            />
+              disabled={isLoadingZones}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select Zone" />
+              </SelectTrigger>
 
-            <Label>Order Booker ID</Label>
-            <Input
-              type="number"
+              <SelectContent>
+                {zones.map((zone: Zone) => (
+                  <SelectItem key={zone.id} value={String(zone.id)}>
+                    {zone.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Label>Order Booker</Label>
+            <Select
               value={formData.order_booker_id}
-              onChange={(e) =>
+              onValueChange={(value) =>
                 setFormData({
                   ...formData,
-                  order_booker_id: e.target.value,
+                  order_booker_id: value,
                 })
               }
-            />
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select Order Booker (Optional)" />
+              </SelectTrigger>
+
+              <SelectContent>
+                {orderBookers.map((ob: OrderBooker) => (
+                  <SelectItem key={ob.id} value={String(ob.id)}>
+                    {ob.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <DialogFooter>

@@ -200,7 +200,7 @@ export default function Shops() {
     } catch (error: any) {
       toast({
         title: "Error",
-        description: "Failed to reassign shop.",
+        description: error.data.detail || "Failed to reassign shop.",
         variant: "destructive",
       });
     }

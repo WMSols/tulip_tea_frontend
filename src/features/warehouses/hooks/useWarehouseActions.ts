@@ -12,8 +12,15 @@ import {
   validateInventoryForm,
   validateQuantity,
 } from "../utils/helpers";
-import { INITIAL_CREATE_FORM, INITIAL_INVENTORY_FORM } from "../utils/constants";
-import type { CreateWarehouseForm, AddInventoryForm, WarehouseInventoryItem } from "../types";
+import {
+  INITIAL_CREATE_FORM,
+  INITIAL_INVENTORY_FORM,
+} from "../utils/constants";
+import type {
+  CreateWarehouseForm,
+  AddInventoryForm,
+  WarehouseInventoryItem,
+} from "../types";
 
 interface UseWarehouseActionsReturn {
   // Create warehouse
@@ -28,15 +35,25 @@ interface UseWarehouseActionsReturn {
   editQty: Record<number, string>;
   setEditQty: React.Dispatch<React.SetStateAction<Record<number, string>>>;
   handleAddInventory: (warehouseId: number) => Promise<void>;
-  handleUpdateInventory: (warehouseId: number, item: WarehouseInventoryItem) => Promise<void>;
+  handleUpdateInventory: (
+    warehouseId: number,
+    item: WarehouseInventoryItem,
+  ) => Promise<void>;
   isAddingInventory: boolean;
   isUpdatingInventory: boolean;
 
   // Delivery men
   assignDeliveryManId: string;
   setAssignDeliveryManId: React.Dispatch<React.SetStateAction<string>>;
-  handleAssignDeliveryMan: (warehouseId: number, onSuccess?: () => void) => Promise<void>;
-  handleRemoveDeliveryMan: (warehouseId: number, deliveryManId: number, onSuccess?: () => void) => Promise<void>;
+  handleAssignDeliveryMan: (
+    warehouseId: number,
+    onSuccess?: () => void,
+  ) => Promise<void>;
+  handleRemoveDeliveryMan: (
+    warehouseId: number,
+    deliveryManId: number,
+    onSuccess?: () => void,
+  ) => Promise<void>;
   isAssigning: boolean;
   isRemoving: boolean;
 
@@ -50,15 +67,23 @@ interface UseWarehouseActionsReturn {
 export const useWarehouseActions = (): UseWarehouseActionsReturn => {
   const { toast } = useToast();
 
-  const [createWarehouse, { isLoading: isCreating }] = useCreateWarehouseMutation();
-  const [addInventory, { isLoading: isAddingInventory }] = useAddWarehouseInventoryMutation();
-  const [updateInventory, { isLoading: isUpdatingInventory }] = useUpdateWarehouseInventoryMutation();
-  const [assignDeliveryMan, { isLoading: isAssigning }] = useAssignDeliveryManToWarehouseMutation();
-  const [removeDeliveryMan, { isLoading: isRemoving }] = useRemoveDeliveryManFromWarehouseMutation();
+  const [createWarehouse, { isLoading: isCreating }] =
+    useCreateWarehouseMutation();
+  const [addInventory, { isLoading: isAddingInventory }] =
+    useAddWarehouseInventoryMutation();
+  const [updateInventory, { isLoading: isUpdatingInventory }] =
+    useUpdateWarehouseInventoryMutation();
+  const [assignDeliveryMan, { isLoading: isAssigning }] =
+    useAssignDeliveryManToWarehouseMutation();
+  const [removeDeliveryMan, { isLoading: isRemoving }] =
+    useRemoveDeliveryManFromWarehouseMutation();
 
   // Form states
-  const [createForm, setCreateForm] = useState<CreateWarehouseForm>(INITIAL_CREATE_FORM);
-  const [addInvForm, setAddInvForm] = useState<AddInventoryForm>(INITIAL_INVENTORY_FORM);
+  const [createForm, setCreateForm] =
+    useState<CreateWarehouseForm>(INITIAL_CREATE_FORM);
+  const [addInvForm, setAddInvForm] = useState<AddInventoryForm>(
+    INITIAL_INVENTORY_FORM,
+  );
   const [editQty, setEditQty] = useState<Record<number, string>>({});
   const [assignDeliveryManId, setAssignDeliveryManId] = useState<string>("");
 
@@ -71,7 +96,7 @@ export const useWarehouseActions = (): UseWarehouseActionsReturn => {
 
   const handleCreateWarehouse = async () => {
     const validation = validateWarehouseForm(createForm);
-    
+
     if (!validation.valid) {
       toast({
         variant: "destructive",
@@ -101,7 +126,7 @@ export const useWarehouseActions = (): UseWarehouseActionsReturn => {
 
   const handleAddInventory = async (warehouseId: number) => {
     const validation = validateInventoryForm(addInvForm);
-    
+
     if (!validation.valid) {
       toast({
         variant: "destructive",
@@ -131,10 +156,13 @@ export const useWarehouseActions = (): UseWarehouseActionsReturn => {
     }
   };
 
-  const handleUpdateInventory = async (warehouseId: number, item: WarehouseInventoryItem) => {
+  const handleUpdateInventory = async (
+    warehouseId: number,
+    item: WarehouseInventoryItem,
+  ) => {
     const nextQty = editQty[item.id];
     const validation = validateQuantity(nextQty);
-    
+
     if (!validation.valid) {
       toast({
         variant: "destructive",
@@ -164,9 +192,12 @@ export const useWarehouseActions = (): UseWarehouseActionsReturn => {
     }
   };
 
-  const handleAssignDeliveryMan = async (warehouseId: number, onSuccess?: () => void) => {
+  const handleAssignDeliveryMan = async (
+    warehouseId: number,
+    onSuccess?: () => void,
+  ) => {
     const delivery_man_id = Number(assignDeliveryManId);
-    
+
     if (Number.isNaN(delivery_man_id)) {
       toast({
         variant: "destructive",
@@ -197,7 +228,7 @@ export const useWarehouseActions = (): UseWarehouseActionsReturn => {
   const handleRemoveDeliveryMan = async (
     warehouseId: number,
     deliveryManId: number,
-    onSuccess?: () => void
+    onSuccess?: () => void,
   ) => {
     try {
       await removeDeliveryMan({

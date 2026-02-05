@@ -4,7 +4,13 @@ import { useGetZonesQuery } from "@/Redux/Api/zonesApi";
 import { useGetProductsQuery } from "@/Redux/Api/productsApi";
 import { useGetDeliveryMenByDistributorQuery } from "@/Redux/Api/deliveryManApi";
 import { calculateWarehouseStats } from "../utils/helpers";
-import type { Warehouse, WarehouseStats, Zone, Product, DeliveryMan } from "../types";
+import type {
+  Warehouse,
+  WarehouseStats,
+  Zone,
+  Product,
+  DeliveryMan,
+} from "../types";
 
 interface UseWarehousesDataReturn {
   warehouses: Warehouse[];
@@ -19,17 +25,23 @@ interface UseWarehousesDataReturn {
 /**
  * Hook for fetching and managing warehouse data
  */
-export const useWarehousesData = (distributorId: number | null): UseWarehousesDataReturn => {
-  const { data: warehouses = [], isLoading: isWarehousesLoading } = useGetWarehousesQuery();
+export const useWarehousesData = (
+  distributorId: number | null,
+): UseWarehousesDataReturn => {
+  const { data: warehouses = [], isLoading: isWarehousesLoading } =
+    useGetWarehousesQuery();
   const { data: zones = [], isLoading: isLoadingZones } = useGetZonesQuery();
   const { data: products = [] } = useGetProductsQuery();
-  
+
   const { data: deliveryMen = [] } = useGetDeliveryMenByDistributorQuery(
     { distributor_id: distributorId! },
-    { skip: !distributorId }
+    { skip: !distributorId },
   );
 
-  const stats = useMemo(() => calculateWarehouseStats(warehouses), [warehouses]);
+  const stats = useMemo(
+    () => calculateWarehouseStats(warehouses),
+    [warehouses],
+  );
 
   return {
     warehouses,

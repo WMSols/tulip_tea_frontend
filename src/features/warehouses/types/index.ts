@@ -1,4 +1,8 @@
-import type { Warehouse, WarehouseInventoryItem, WarehouseDeliveryMan } from "@/types/warehouse";
+import type {
+  Warehouse,
+  WarehouseInventoryItem,
+  WarehouseDeliveryMan,
+} from "@/types/warehouse";
 import type { Zone } from "@/types/zones";
 
 // Re-export base types

@@ -40,18 +40,23 @@ interface UseWarehouseDialogsReturn {
 /**
  * Hook for managing warehouse dialog states
  */
-export const useWarehouseDialogs = (zones: Zone[]): UseWarehouseDialogsReturn => {
+export const useWarehouseDialogs = (
+  zones: Zone[],
+): UseWarehouseDialogsReturn => {
   const [isManageOpen, setIsManageOpen] = useState(false);
-  const [selectedWarehouse, setSelectedWarehouse] = useState<Warehouse | null>(null);
+  const [selectedWarehouse, setSelectedWarehouse] = useState<Warehouse | null>(
+    null,
+  );
   const [isRemoveConfirmOpen, setIsRemoveConfirmOpen] = useState(false);
-  const [pendingRemove, setPendingRemove] = useState<WarehouseDeliveryMan | null>(null);
+  const [pendingRemove, setPendingRemove] =
+    useState<WarehouseDeliveryMan | null>(null);
 
   const selectedZone = findZoneById(zones, selectedWarehouse?.zone_id);
 
   const { data: inventory = [], isFetching: isInventoryFetching } =
     useGetWarehouseInventoryQuery(
       { warehouse_id: selectedWarehouse?.id ?? 0 },
-      { skip: !selectedWarehouse?.id || !isManageOpen }
+      { skip: !selectedWarehouse?.id || !isManageOpen },
     );
 
   const {
@@ -60,7 +65,7 @@ export const useWarehouseDialogs = (zones: Zone[]): UseWarehouseDialogsReturn =>
     refetch: refetchAssignedDeliveryMen,
   } = useGetWarehouseDeliveryMenQuery(
     { warehouse_id: selectedWarehouse?.id ?? 0 },
-    { skip: !selectedWarehouse?.id || !isManageOpen }
+    { skip: !selectedWarehouse?.id || !isManageOpen },
   );
 
   const handleOpenManage = (warehouse: Warehouse) => {

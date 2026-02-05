@@ -11,7 +11,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { INVENTORY_MAX_HEIGHT } from "../../utils/constants";
 import { getProductName } from "../../utils/formatters";
-import type { WarehouseInventoryItem, Product, AddInventoryForm } from "../../types";
+import type {
+  WarehouseInventoryItem,
+  Product,
+  AddInventoryForm,
+} from "../../types";
 
 interface InventorySectionProps {
   inventory: WarehouseInventoryItem[];

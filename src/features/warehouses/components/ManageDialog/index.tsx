@@ -99,7 +99,7 @@ export default function ManageWarehouseDialog({
             <div className="space-y-1">
               <Label>Zone</Label>
               <Input
-                value={zone ? zone.name : warehouse?.zone_id ?? ""}
+                value={zone ? zone.name : (warehouse?.zone_id ?? "")}
                 readOnly
                 className="bg-background border-border"
               />

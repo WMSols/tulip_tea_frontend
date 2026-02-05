@@ -2,7 +2,10 @@ import { Warehouse as WarehouseIcon, MapPin, Edit2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/dashboard/StatusBadge";
 import { formatDate } from "../utils/formatters";
-import { getWarehouseStatusVariant, getWarehouseStatusLabel } from "../utils/helpers";
+import {
+  getWarehouseStatusVariant,
+  getWarehouseStatusLabel,
+} from "../utils/helpers";
 import type { Warehouse } from "../types";
 
 interface WarehousesGridProps {
@@ -46,7 +49,10 @@ export default function WarehousesGrid({
                 </p>
 
                 <div className="flex flex-wrap gap-1 mt-2">
-                  <StatusBadge status="info" label={`Zone #${warehouse.zone_id}`} />
+                  <StatusBadge
+                    status="info"
+                    label={`Zone #${warehouse.zone_id}`}
+                  />
                   <StatusBadge
                     status={getWarehouseStatusVariant(warehouse.is_active)}
                     label={getWarehouseStatusLabel(warehouse.is_active)}

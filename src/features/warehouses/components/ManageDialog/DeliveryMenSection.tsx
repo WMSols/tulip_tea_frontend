@@ -103,7 +103,8 @@ export default function DeliveryMenSection({
                     </span>
                   </div>
                   <div className="text-xs text-muted-foreground mt-1">
-                    Phone: {dm.phone} • Assigned: {formatDateTime(dm.assigned_at)}
+                    Phone: {dm.phone} • Assigned:{" "}
+                    {formatDateTime(dm.assigned_at)}
                   </div>
                 </div>
 

@@ -17,8 +17,15 @@ export default function Warehouses() {
     useAppSelector((s) => (s.auth.user as any)?.id);
 
   // Fetch data
-  const { warehouses, zones, products, deliveryMen, stats, isLoading, isLoadingZones } =
-    useWarehousesData(distributorId);
+  const {
+    warehouses,
+    zones,
+    products,
+    deliveryMen,
+    stats,
+    isLoading,
+    isLoadingZones,
+  } = useWarehousesData(distributorId);
 
   // Actions
   const {
@@ -89,8 +96,8 @@ export default function Warehouses() {
       handleRemoveDeliveryMan(
         selectedWarehouse.id,
         pendingRemove.id,
-        refetchAssignedDeliveryMen
-      )
+        refetchAssignedDeliveryMen,
+      ),
     );
   };
 

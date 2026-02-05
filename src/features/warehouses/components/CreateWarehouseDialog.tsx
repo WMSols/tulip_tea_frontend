@@ -57,9 +57,7 @@ export default function CreateWarehouseDialog({
             <Label>Warehouse Name</Label>
             <Input
               value={form.name}
-              onChange={(e) =>
-                onFormChange({ ...form, name: e.target.value })
-              }
+              onChange={(e) => onFormChange({ ...form, name: e.target.value })}
               placeholder="e.g., South Warehouse"
               className="bg-background border-border"
             />

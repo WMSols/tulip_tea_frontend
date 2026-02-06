@@ -148,9 +148,7 @@ export default function ProductFormDialog({
             Cancel
           </Button>
           <Button onClick={onSubmit} disabled={isSubmitting}>
-            {isSubmitting && (
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            )}
+            {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
             {isEditMode ? "Update Product" : "Create Product"}
           </Button>
         </DialogFooter>

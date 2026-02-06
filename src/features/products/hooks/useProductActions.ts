@@ -9,7 +9,10 @@ import type { Product, ProductFormData } from "../types";
 
 interface UseProductActionsReturn {
   handleCreateProduct: (formData: ProductFormData) => Promise<boolean>;
-  handleUpdateProduct: (productId: number, formData: ProductFormData) => Promise<boolean>;
+  handleUpdateProduct: (
+    productId: number,
+    formData: ProductFormData,
+  ) => Promise<boolean>;
   handleDeleteProduct: (productId: number) => Promise<boolean>;
   isCreating: boolean;
   isUpdating: boolean;
@@ -26,7 +29,9 @@ export const useProductActions = (): UseProductActionsReturn => {
   const [updateProduct, { isLoading: isUpdating }] = useUpdateProductMutation();
   const [deleteProduct, { isLoading: isDeleting }] = useDeleteProductMutation();
 
-  const handleCreateProduct = async (formData: ProductFormData): Promise<boolean> => {
+  const handleCreateProduct = async (
+    formData: ProductFormData,
+  ): Promise<boolean> => {
     const validation = validateProductForm(formData);
 
     if (!validation.valid) {
@@ -60,7 +65,7 @@ export const useProductActions = (): UseProductActionsReturn => {
 
   const handleUpdateProduct = async (
     productId: number,
-    formData: ProductFormData
+    formData: ProductFormData,
   ): Promise<boolean> => {
     const validation = validateProductForm(formData);
 

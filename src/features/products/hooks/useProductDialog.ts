@@ -20,7 +20,8 @@ interface UseProductDialogReturn {
 export const useProductDialog = (): UseProductDialogReturn => {
   const [isOpen, setIsOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-  const [formData, setFormData] = useState<ProductFormData>(INITIAL_PRODUCT_FORM);
+  const [formData, setFormData] =
+    useState<ProductFormData>(INITIAL_PRODUCT_FORM);
 
   const mode: ProductDialogMode = editingProduct ? "edit" : "create";
 

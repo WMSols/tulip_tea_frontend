@@ -5,7 +5,7 @@ import type { Product, ProductStats, ProductFormData } from "../types";
  */
 export const calculateProductStats = (products: Product[]): ProductStats => {
   const active = products.filter((p) => p.is_active).length;
-  
+
   return {
     total: products.length,
     active,
@@ -17,7 +17,7 @@ export const calculateProductStats = (products: Product[]): ProductStats => {
  * Validate product form data
  */
 export const validateProductForm = (
-  form: ProductFormData
+  form: ProductFormData,
 ): { valid: boolean; error?: string } => {
   if (!form.code.trim()) {
     return { valid: false, error: "Product code is required" };
@@ -42,7 +42,9 @@ export const validateProductForm = (
 /**
  * Get product status variant for StatusBadge
  */
-export const getProductStatusVariant = (isActive: boolean): "success" | "neutral" => {
+export const getProductStatusVariant = (
+  isActive: boolean,
+): "success" | "neutral" => {
   return isActive ? "success" : "neutral";
 };
 

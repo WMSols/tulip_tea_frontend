@@ -5,6 +5,7 @@ import {
   Route,
   Users,
   Store,
+  Wallet,
   CreditCard,
   Warehouse,
   Package,
@@ -30,6 +31,7 @@ const menuItems = [
   { icon: Warehouse, label: "Warehouses", path: "/warehouses" },
   { icon: Package, label: "Products", path: "/products" },
   { icon: ClipboardCheck, label: "Visits", path: "/visits" },
+  { icon: Wallet, label: "Wallet", path: "/wallet" },
 ];
 
 export function DashboardSidebar({ isOpen, onToggle }: SidebarProps) {

@@ -26,7 +26,10 @@ export const zonesApi = baseApi.injectEndpoints({
         method: "POST",
         body,
       }),
-      invalidatesTags: [{ type: "Zones" as const, id: "LIST" }],
+      invalidatesTags: [
+        { type: "Zones" as const, id: "LIST" },
+        { type: "Routes", id: "LIST" },
+      ],
     }),
     updateZone: builder.mutation<Zone, { id: number; body: CreateZoneDTO }>({
       query: ({ id, body }) => ({
@@ -34,7 +37,10 @@ export const zonesApi = baseApi.injectEndpoints({
         method: "PUT",
         body,
       }),
-      invalidatesTags: [{ type: "Zones", id: "LIST" }],
+      invalidatesTags: [
+        { type: "Zones", id: "LIST" },
+        { type: "Routes", id: "LIST" },
+      ],
     }),
 
     deleteZone: builder.mutation<void, number>({
@@ -42,7 +48,10 @@ export const zonesApi = baseApi.injectEndpoints({
         url: `/zones/${zone_id}`,
         method: "DELETE",
       }),
-      invalidatesTags: [{ type: "Zones" as const, id: "LIST" }],
+      invalidatesTags: [
+        { type: "Zones" as const, id: "LIST" },
+        { type: "Routes", id: "LIST" },
+      ],
     }),
   }),
   overrideExisting: false,

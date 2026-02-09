@@ -123,7 +123,7 @@ export default function Zones() {
             }
             onConfirm={() => handleDelete(zone.id)}
             title="Delete Zone?"
-            description="This will permanently delete this zone and cannot be undone."
+            description="This will permanently delete this zone and all data associated with it. This action cannot be undone."
             loading={isDeleting}
           />
         </div>

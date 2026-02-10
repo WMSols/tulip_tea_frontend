@@ -66,9 +66,7 @@ export default function Zones() {
     } catch (err) {
       toast({
         title: "Error",
-        description: editingZone
-          ? "Failed to update zone."
-          : "Failed to create zone.",
+        description: err?.data?.detail || "Failed to perform operation.",
         variant: "destructive",
       });
     }

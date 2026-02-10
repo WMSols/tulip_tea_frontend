@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { useAppSelector } from "@/Redux/Hooks/hooks";
 import { useGetAllShopsQuery } from "@/Redux/Api/shopsApi";
 import { useGetZonesQuery } from "@/Redux/Api/zonesApi";
 import { mapApiShopToUi } from "../utils/helpers";
@@ -8,7 +9,8 @@ import type { UiShop } from "../types";
  * Hook to fetch and transform shops data
  */
 export function useShopsData() {
-  const { data: allShops = [], isLoading } = useGetAllShopsQuery();
+  const distributorId = useAppSelector((s) => s.auth.user!.id);
+  const { data: allShops = [], isLoading } = useGetAllShopsQuery(distributorId);
   const { data: zones = [], isLoading: isLoadingZones } = useGetZonesQuery();
 
   const zoneMap = useMemo(() => {

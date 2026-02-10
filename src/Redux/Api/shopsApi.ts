@@ -3,8 +3,8 @@ import { ApiShop, VerifyShopRequest, ReassignShopRequest } from "@/types/shops";
 
 export const shopsApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    getAllShops: builder.query<ApiShop[], void>({
-      query: () => "/shops/all",
+    getAllShops: builder.query<ApiShop[], number>({
+      query: (distributorId) => `/shops/all?distributor_id=${distributorId}`,
       providesTags: ["Shops"],
     }),
 

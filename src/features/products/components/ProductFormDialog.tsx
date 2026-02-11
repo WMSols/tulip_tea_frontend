@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Plus, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,9 +18,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { FormField } from "@/components/ui/FormField";
 import { PRODUCT_UNITS } from "../utils/constants";
+import { productSchema, validateForm, type FormErrors } from "@/lib/validations";
 import type { ProductFormData, ProductDialogMode } from "../types";
 
 interface ProductFormDialogProps {
@@ -44,6 +46,23 @@ export default function ProductFormDialog({
   triggerButton,
 }: ProductFormDialogProps) {
   const isEditMode = mode === "edit";
+  const [errors, setErrors] = useState<FormErrors<ProductFormData>>({});
+
+  const clearFieldError = (field: keyof ProductFormData) => {
+    if (errors[field]) setErrors((prev) => ({ ...prev, [field]: undefined }));
+  };
+
+  const handleSubmit = () => {
+    const validationErrors = validateForm(productSchema, formData);
+    setErrors(validationErrors);
+    if (Object.keys(validationErrors).length > 0) return;
+    onSubmit();
+  };
+
+  const handleOpenChange = (open: boolean) => {
+    if (!open) setErrors({});
+    onOpenChange(open);
+  };
 
   const defaultTrigger = (
     <Button className="gap-2">
@@ -53,7 +72,7 @@ export default function ProductFormDialog({
   );
 
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       {triggerButton !== undefined ? (
         triggerButton && <DialogTrigger asChild>{triggerButton}</DialogTrigger>
       ) : (
@@ -70,48 +89,48 @@ export default function ProductFormDialog({
 
         <div className="space-y-4 py-4">
           <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Product Code</Label>
+            <FormField label="Product Code" error={errors.code}>
               <Input
                 value={formData.code}
-                onChange={(e) =>
-                  onFormChange({ ...formData, code: e.target.value })
-                }
+                onChange={(e) => {
+                  onFormChange({ ...formData, code: e.target.value });
+                  clearFieldError("code");
+                }}
                 placeholder="e.g., TEA001"
               />
-            </div>
+            </FormField>
 
-            <div className="space-y-2">
-              <Label>Price</Label>
+            <FormField label="Price" error={errors.price}>
               <Input
                 type="number"
                 value={formData.price}
-                onChange={(e) =>
-                  onFormChange({ ...formData, price: e.target.value })
-                }
+                onChange={(e) => {
+                  onFormChange({ ...formData, price: e.target.value });
+                  clearFieldError("price");
+                }}
                 placeholder="0"
               />
-            </div>
+            </FormField>
           </div>
 
-          <div className="space-y-2">
-            <Label>Product Name</Label>
+          <FormField label="Product Name" error={errors.name}>
             <Input
               value={formData.name}
-              onChange={(e) =>
-                onFormChange({ ...formData, name: e.target.value })
-              }
+              onChange={(e) => {
+                onFormChange({ ...formData, name: e.target.value });
+                clearFieldError("name");
+              }}
               placeholder="e.g., Green Tea Premium"
             />
-          </div>
+          </FormField>
 
-          <div className="space-y-2">
-            <Label>Unit</Label>
+          <FormField label="Unit" error={errors.unit}>
             <Select
               value={formData.unit}
-              onValueChange={(value) =>
-                onFormChange({ ...formData, unit: value })
-              }
+              onValueChange={(value) => {
+                onFormChange({ ...formData, unit: value });
+                clearFieldError("unit");
+              }}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select unit" />
@@ -124,11 +143,13 @@ export default function ProductFormDialog({
                 ))}
               </SelectContent>
             </Select>
-          </div>
+          </FormField>
 
           {isEditMode && (
             <div className="flex items-center justify-between">
-              <Label>Active Status</Label>
+              <label className="text-sm font-medium leading-none">
+                Active Status
+              </label>
               <Switch
                 checked={formData.is_active}
                 onCheckedChange={(checked) =>
@@ -142,12 +163,12 @@ export default function ProductFormDialog({
         <DialogFooter>
           <Button
             variant="outline"
-            onClick={() => onOpenChange(false)}
+            onClick={() => handleOpenChange(false)}
             disabled={isSubmitting}
           >
             Cancel
           </Button>
-          <Button onClick={onSubmit} disabled={isSubmitting}>
+          <Button onClick={handleSubmit} disabled={isSubmitting}>
             {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
             {isEditMode ? "Update Product" : "Create Product"}
           </Button>

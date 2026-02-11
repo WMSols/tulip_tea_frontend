@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/dashboard/DataTable";
 import { StatusBadge } from "@/components/dashboard/StatusBadge";
 import { DeleteConfirmDialog } from "@/components/dashboard/DeleteConfirmDialog";
+import { PageSkeleton } from "@/components/dashboard/PageSkeleton";
+import { FormField } from "@/components/ui/FormField";
 import {
   Dialog,
   DialogContent,
@@ -11,7 +13,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   Select,
@@ -21,7 +22,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import {
   useGetRoutesQuery,
@@ -37,6 +37,17 @@ import { useAppSelector } from "@/Redux/Hooks/hooks";
 import type { CreateRouteRequest, UpdateRouteRequest } from "@/types/routes";
 import { Zone } from "@/types/zones";
 import { OrderBooker } from "@/types/staff";
+import {
+  routeSchema,
+  validateForm,
+  type FormErrors,
+} from "@/lib/validations";
+
+interface RouteFormData {
+  name: string;
+  zone_id: string;
+  order_booker_id: string;
+}
 
 export default function Routes() {
   const { toast } = useToast();
@@ -44,9 +55,10 @@ export default function Routes() {
 
   const { data: zones = [], isLoading: isLoadingZones } = useGetZonesQuery();
 
-  const { data: orderBookers = [] } = useGetOrderBookersByDistributorQuery({
-    distributor_id: distributorId,
-  });
+  const { data: orderBookers = [], isLoading: isLoadingOB } =
+    useGetOrderBookersByDistributorQuery({
+      distributor_id: distributorId,
+    });
 
   const [zoneId, setZoneId] = useState<number | undefined>();
   const { data: routes = [], isLoading } = useGetRoutesQuery(
@@ -55,6 +67,8 @@ export default function Routes() {
       : { filterType: "distributor", filterId: distributorId },
   );
 
+  const isPageLoading = isLoadingZones || isLoadingOB || isLoading;
+
   const [createRoute, { isLoading: isCreating }] = useCreateRouteMutation();
   const [updateRoute, { isLoading: isUpdating }] = useUpdateRouteMutation();
   const [deleteRoute, { isLoading: isDeleting }] = useDeleteRouteMutation();
@@ -62,8 +76,9 @@ export default function Routes() {
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingRoute, setEditingRoute] = useState<Route | null>(null);
+  const [errors, setErrors] = useState<FormErrors<RouteFormData>>({});
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<RouteFormData>({
     name: "",
     zone_id: "",
     order_booker_id: "",
@@ -80,6 +95,7 @@ export default function Routes() {
   const openCreateDialog = () => {
     setEditingRoute(null);
     setFormData({ name: "", zone_id: "", order_booker_id: "" });
+    setErrors({});
     setIsDialogOpen(true);
   };
 
@@ -92,10 +108,19 @@ export default function Routes() {
         ? String(route.order_booker_id)
         : "",
     });
+    setErrors({});
     setIsDialogOpen(true);
   };
 
+  const clearFieldError = (field: keyof RouteFormData) => {
+    if (errors[field]) setErrors((prev) => ({ ...prev, [field]: undefined }));
+  };
+
   const handleSubmit = async () => {
+    const validationErrors = validateForm(routeSchema, formData);
+    setErrors(validationErrors);
+    if (Object.keys(validationErrors).length > 0) return;
+
     try {
       const body: CreateRouteRequest | UpdateRouteRequest = {
         name: formData.name,
@@ -107,7 +132,7 @@ export default function Routes() {
       };
 
       if (editingRoute) {
-        const res = await updateRoute({
+        await updateRoute({
           route_id: editingRoute.id,
           body: body as UpdateRouteRequest,
         }).unwrap();
@@ -121,8 +146,8 @@ export default function Routes() {
       }
 
       setIsDialogOpen(false);
+      setErrors({});
     } catch (error: any) {
-      console.log(error);
       toast({
         title: "Error",
         description: error?.data?.detail || "Operation failed",
@@ -136,7 +161,6 @@ export default function Routes() {
       await deleteRoute(routeId).unwrap();
       toast({ title: "Route Deleted" });
     } catch (error: any) {
-      console.error("Delete route error:", error);
       toast({
         title: "Error",
         description: error?.data?.detail || "Failed to delete route",
@@ -171,6 +195,17 @@ export default function Routes() {
           : "Unassigned",
     },
   ];
+
+  if (isPageLoading) {
+    return (
+      <PageSkeleton
+        statCards={0}
+        tableColumns={4}
+        tableRows={6}
+        showHeader
+      />
+    );
+  }
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -214,7 +249,13 @@ export default function Routes() {
         )}
       />
 
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+      <Dialog
+        open={isDialogOpen}
+        onOpenChange={(open) => {
+          setIsDialogOpen(open);
+          if (!open) setErrors({});
+        }}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
@@ -228,57 +269,62 @@ export default function Routes() {
           </DialogHeader>
 
           <div className="space-y-4 py-4">
-            <Label>Route Name</Label>
-            <Input
-              value={formData.name}
-              onChange={(e) =>
-                setFormData({ ...formData, name: e.target.value })
-              }
-            />
+            <FormField label="Route Name" error={errors.name}>
+              <Input
+                value={formData.name}
+                onChange={(e) => {
+                  setFormData({ ...formData, name: e.target.value });
+                  clearFieldError("name");
+                }}
+                placeholder="Enter route name"
+              />
+            </FormField>
 
-            <Label>Zone</Label>
-            <Select
-              value={formData.zone_id}
-              onValueChange={(value) =>
-                setFormData({ ...formData, zone_id: value })
-              }
-              disabled={isLoadingZones}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select Zone" />
-              </SelectTrigger>
+            <FormField label="Zone" error={errors.zone_id}>
+              <Select
+                value={formData.zone_id}
+                onValueChange={(value) => {
+                  setFormData({ ...formData, zone_id: value });
+                  clearFieldError("zone_id");
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Zone" />
+                </SelectTrigger>
 
-              <SelectContent>
-                {zones.map((zone: Zone) => (
-                  <SelectItem key={zone.id} value={String(zone.id)}>
-                    {zone.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+                <SelectContent>
+                  {zones.map((zone: Zone) => (
+                    <SelectItem key={zone.id} value={String(zone.id)}>
+                      {zone.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </FormField>
 
-            <Label>Order Booker</Label>
-            <Select
-              value={formData.order_booker_id}
-              onValueChange={(value) =>
-                setFormData({
-                  ...formData,
-                  order_booker_id: value,
-                })
-              }
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select Order Booker (Optional)" />
-              </SelectTrigger>
+            <FormField label="Order Booker" optional>
+              <Select
+                value={formData.order_booker_id}
+                onValueChange={(value) =>
+                  setFormData({
+                    ...formData,
+                    order_booker_id: value,
+                  })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Order Booker (Optional)" />
+                </SelectTrigger>
 
-              <SelectContent>
-                {orderBookers.map((ob: OrderBooker) => (
-                  <SelectItem key={ob.id} value={String(ob.id)}>
-                    {ob.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+                <SelectContent>
+                  {orderBookers.map((ob: OrderBooker) => (
+                    <SelectItem key={ob.id} value={String(ob.id)}>
+                      {ob.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </FormField>
           </div>
 
           <DialogFooter>

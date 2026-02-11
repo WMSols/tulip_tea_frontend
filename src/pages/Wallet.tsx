@@ -15,6 +15,7 @@ import WalletRecentActivity from "@/features/wallets/components/WalletRecentActi
 import WalletTransactionHistory from "@/features/wallets/components/WalletTransactionHistory";
 import CollectMoneyDialog from "@/features/wallets/components/CollectMoneyDialog";
 import TransactionDetailDialog from "@/features/wallets/components/TransactionDetailDialog";
+import { PageSkeleton } from "@/components/dashboard/PageSkeleton";
 
 import type { WalletTransaction } from "@/features/wallets/types";
 
@@ -23,6 +24,9 @@ export default function Wallet() {
 
   // Data
   const { wallets, transactions, stats, loading } = useWalletData();
+
+  // Combined loading: wait for all wallet data before showing page
+  const isPageLoading = loading.balance || loading.wallets || loading.transactions;
 
   // Collect action
   const { handleCollect, isCollecting } = useWalletActions();
@@ -45,6 +49,18 @@ export default function Wallet() {
     const success = await handleCollect(collectTarget, formData);
     if (success) closeCollectDialog();
   };
+
+  if (isPageLoading) {
+    return (
+      <PageSkeleton
+        statCards={4}
+        statColumns={4}
+        tableColumns={5}
+        tableRows={6}
+        showHeader
+      />
+    );
+  }
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -72,18 +88,15 @@ export default function Wallet() {
 
         {/* Overview Tab */}
         <TabsContent value="overview" className="space-y-6 mt-6">
-          <WalletStats
-            stats={stats}
-            loading={loading.balance || loading.wallets}
-          />
+          <WalletStats stats={stats} loading={false} />
           <WalletTeamTable
             wallets={wallets}
-            loading={loading.wallets}
+            loading={false}
             onCollect={openCollectDialog}
           />
           <WalletRecentActivity
             transactions={transactions}
-            loading={loading.transactions}
+            loading={false}
             onViewAll={() => setActiveTab("history")}
           />
         </TabsContent>
@@ -93,7 +106,7 @@ export default function Wallet() {
           <WalletTransactionHistory
             transactions={transactions}
             wallets={wallets}
-            loading={loading.transactions}
+            loading={false}
             onSelectTransaction={setSelectedTx}
           />
         </TabsContent>

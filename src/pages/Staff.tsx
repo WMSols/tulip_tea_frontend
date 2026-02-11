@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/dashboard/DataTable";
 import { StatusBadge } from "@/components/dashboard/StatusBadge";
 import { DeleteConfirmDialog } from "@/components/dashboard/DeleteConfirmDialog";
+import { PageSkeleton } from "@/components/dashboard/PageSkeleton";
+import { FormField } from "@/components/ui/FormField";
 import {
   Dialog,
   DialogContent,
@@ -21,7 +23,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useAppSelector } from "@/Redux/Hooks/hooks";
@@ -40,6 +41,13 @@ import {
   useDeleteDeliveryManMutation,
 } from "@/Redux/Api/deliveryManApi";
 
+import {
+  staffSchema,
+  staffEditSchema,
+  validateForm,
+  type FormErrors,
+} from "@/lib/validations";
+
 interface StaffMemberUI {
   id: number;
   name: string;
@@ -52,6 +60,15 @@ interface StaffMemberUI {
   createdAt: string;
 }
 
+interface StaffFormData {
+  name: string;
+  phone: string;
+  password: string;
+  role: "order_booker" | "delivery_man";
+  zone: string;
+  routes: string[];
+}
+
 export default function Staff() {
   const distributorId = useAppSelector((state) => state.auth.user.id);
 
@@ -62,26 +79,32 @@ export default function Staff() {
     "all" | "order_booker" | "delivery_man"
   >("all");
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<StaffFormData>({
     name: "",
     phone: "",
     password: "",
-    role: "order_booker" as "order_booker" | "delivery_man",
+    role: "order_booker",
     zone: "",
-    routes: [] as string[],
+    routes: [],
   });
+
+  const [errors, setErrors] = useState<FormErrors<StaffFormData>>({});
 
   /* ------------------- API ------------------- */
 
   const { data: zones = [], isLoading: isLoadingZones } = useGetZonesQuery();
 
-  const { data: orderBookers = [] } = useGetOrderBookersByDistributorQuery({
-    distributor_id: distributorId,
-  });
+  const { data: orderBookers = [], isLoading: isLoadingOB } =
+    useGetOrderBookersByDistributorQuery({
+      distributor_id: distributorId,
+    });
 
-  const { data: deliveryMen = [] } = useGetDeliveryMenByDistributorQuery({
-    distributor_id: distributorId,
-  });
+  const { data: deliveryMen = [], isLoading: isLoadingDM } =
+    useGetDeliveryMenByDistributorQuery({
+      distributor_id: distributorId,
+    });
+
+  const isPageLoading = isLoadingZones || isLoadingOB || isLoadingDM;
 
   /* ------------------- API HOOKS WITH LOADING STATES ------------------- */
   const [createOrderBooker, { isLoading: isCreatingOB }] =
@@ -131,6 +154,11 @@ export default function Staff() {
 
   /* ------------------- HANDLERS ------------------- */
   const handleSubmit = async () => {
+    const schema = editingStaff ? staffEditSchema : staffSchema;
+    const validationErrors = validateForm(schema as any, formData);
+    setErrors(validationErrors);
+    if (Object.keys(validationErrors).length > 0) return;
+
     try {
       const payload = {
         name: formData.name,
@@ -177,6 +205,7 @@ export default function Staff() {
 
       setIsDialogOpen(false);
       setEditingStaff(null);
+      setErrors({});
       setFormData({
         name: "",
         phone: "",
@@ -205,6 +234,7 @@ export default function Staff() {
       zone: String(staff.zone_id),
       routes: staff.routes,
     });
+    setErrors({});
     setIsDialogOpen(true);
   };
 
@@ -232,6 +262,10 @@ export default function Staff() {
         variant: "destructive",
       });
     }
+  };
+
+  const clearFieldError = (field: keyof StaffFormData) => {
+    if (errors[field]) setErrors((prev) => ({ ...prev, [field]: undefined }));
   };
 
   const filteredStaff =
@@ -282,6 +316,19 @@ export default function Staff() {
     },
   ];
 
+  if (isPageLoading) {
+    return (
+      <PageSkeleton
+        statCards={4}
+        statColumns={4}
+        showFilters
+        tableColumns={5}
+        tableRows={6}
+        showHeader
+      />
+    );
+  }
+
   return (
     <div className="space-y-6 animate-fade-in">
       {/* HEADER */}
@@ -293,12 +340,19 @@ export default function Staff() {
           </p>
         </div>
 
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <Dialog
+          open={isDialogOpen}
+          onOpenChange={(open) => {
+            setIsDialogOpen(open);
+            if (!open) setErrors({});
+          }}
+        >
           <DialogTrigger asChild>
             <Button
               className="gap-2"
               onClick={() => {
                 setEditingStaff(null);
+                setErrors({});
                 setFormData({
                   name: "",
                   phone: "",
@@ -333,46 +387,55 @@ export default function Staff() {
 
             <div className="space-y-4 py-4">
               <div className="grid grid-cols-2 gap-4">
-                <div className="col-span-2 space-y-2">
-                  <Label>Full Name</Label>
-                  <Input
-                    value={formData.name}
-                    onChange={(e) =>
-                      setFormData({ ...formData, name: e.target.value })
-                    }
-                  />
+                <div className="col-span-2">
+                  <FormField label="Full Name" error={errors.name}>
+                    <Input
+                      value={formData.name}
+                      onChange={(e) => {
+                        setFormData({ ...formData, name: e.target.value });
+                        clearFieldError("name");
+                      }}
+                      placeholder="Enter full name"
+                    />
+                  </FormField>
                 </div>
 
-                <div className="space-y-2">
-                  <Label>Phone</Label>
+                <FormField label="Phone" error={errors.phone}>
                   <Input
                     value={formData.phone}
-                    onChange={(e) =>
-                      setFormData({ ...formData, phone: e.target.value })
-                    }
+                    onChange={(e) => {
+                      setFormData({ ...formData, phone: e.target.value });
+                      clearFieldError("phone");
+                    }}
+                    placeholder="03XXXXXXXXX"
                   />
-                </div>
+                </FormField>
 
-                <div className="space-y-2">
-                  <Label>Password</Label>
+                <FormField
+                  label="Password"
+                  error={errors.password}
+                  optional={!!editingStaff}
+                >
                   <Input
                     type="password"
                     value={formData.password}
-                    onChange={(e) =>
-                      setFormData({ ...formData, password: e.target.value })
-                    }
+                    onChange={(e) => {
+                      setFormData({ ...formData, password: e.target.value });
+                      clearFieldError("password");
+                    }}
+                    placeholder={editingStaff ? "Leave blank to keep" : "Min 6 characters"}
                   />
-                </div>
+                </FormField>
               </div>
 
               {!editingStaff && (
-                <div className="space-y-2">
-                  <Label>Role</Label>
+                <FormField label="Role" error={errors.role}>
                   <Select
                     value={formData.role}
-                    onValueChange={(v) =>
-                      setFormData({ ...formData, role: v as any })
-                    }
+                    onValueChange={(v) => {
+                      setFormData({ ...formData, role: v as any });
+                      clearFieldError("role");
+                    }}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select role" />
@@ -382,21 +445,20 @@ export default function Staff() {
                       <SelectItem value="delivery_man">Delivery Man</SelectItem>
                     </SelectContent>
                   </Select>
-                </div>
+                </FormField>
               )}
 
-              <div className="space-y-2">
-                <Label>Zone</Label>
-
+              <FormField label="Zone" error={errors.zone}>
                 <Select
                   value={formData.zone}
-                  onValueChange={(v) => setFormData({ ...formData, zone: v })}
-                  disabled={isLoadingZones}
+                  onValueChange={(v) => {
+                    setFormData({ ...formData, zone: v });
+                    clearFieldError("zone");
+                  }}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select zone" />
                   </SelectTrigger>
-
                   <SelectContent>
                     {zones.map((z) => (
                       <SelectItem key={z.id} value={String(z.id)}>
@@ -405,7 +467,7 @@ export default function Staff() {
                     ))}
                   </SelectContent>
                 </Select>
-              </div>
+              </FormField>
             </div>
 
             <DialogFooter>

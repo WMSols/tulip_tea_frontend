@@ -27,6 +27,8 @@ export function mapApiShopToUi(
     createdAt: shop.created_at,
     assignedOrderBookerId: shop.assigned_to_order_booker,
     assignedOrderBookerName: shop.assigned_to_order_booker_name,
+    cnicFrontPhoto: shop.owner_cnic_front_photo || null,
+    cnicBackPhoto: shop.owner_cnic_back_photo || null,
   };
 }
 

@@ -3,6 +3,8 @@ import { Plus, Edit2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/dashboard/DataTable";
 import { DeleteConfirmDialog } from "@/components/dashboard/DeleteConfirmDialog";
+import { PageSkeleton } from "@/components/dashboard/PageSkeleton";
+import { FormField } from "@/components/ui/FormField";
 import {
   Dialog,
   DialogContent,
@@ -13,7 +15,6 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import {
   useGetZonesQuery,
@@ -22,6 +23,7 @@ import {
   useUpdateZoneMutation,
 } from "@/Redux/Api/zonesApi";
 import { Zone } from "@/types/zones";
+import { zoneSchema, validateForm, type FormErrors } from "@/lib/validations";
 
 export default function Zones() {
   const { data: zones = [], isLoading: isLoadingZones } = useGetZonesQuery();
@@ -34,6 +36,7 @@ export default function Zones() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingZone, setEditingZone] = useState<Zone | null>(null);
   const [formData, setFormData] = useState({ name: "" });
+  const [errors, setErrors] = useState<FormErrors<{ name: string }>>({});
   const [searchTerm, setSearchTerm] = useState("");
   const { toast } = useToast();
 
@@ -42,6 +45,10 @@ export default function Zones() {
   );
 
   const handleSubmit = async () => {
+    const validationErrors = validateForm(zoneSchema, formData);
+    setErrors(validationErrors);
+    if (Object.keys(validationErrors).length > 0) return;
+
     try {
       if (editingZone) {
         await updateZone({
@@ -63,7 +70,8 @@ export default function Zones() {
       setIsDialogOpen(false);
       setFormData({ name: "" });
       setEditingZone(null);
-    } catch (err) {
+      setErrors({});
+    } catch (err: any) {
       toast({
         title: "Error",
         description: err?.data?.detail || "Failed to perform operation.",
@@ -75,6 +83,7 @@ export default function Zones() {
   const handleEdit = (zone: Zone) => {
     setEditingZone(zone);
     setFormData({ name: zone.name });
+    setErrors({});
     setIsDialogOpen(true);
   };
 
@@ -131,11 +140,12 @@ export default function Zones() {
 
   if (isLoadingZones) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <Button disabled className="gap-2">
-          <Plus className="w-4 h-4 animate-spin" /> Loading...
-        </Button>
-      </div>
+      <PageSkeleton
+        statCards={0}
+        tableColumns={4}
+        tableRows={5}
+        showHeader
+      />
     );
   }
 
@@ -155,10 +165,20 @@ export default function Zones() {
           onChange={(e) => setSearchTerm(e.target.value)}
           className="max-w-xs"
         />
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <Dialog
+          open={isDialogOpen}
+          onOpenChange={(open) => {
+            setIsDialogOpen(open);
+            if (!open) setErrors({});
+          }}
+        >
           <DialogTrigger asChild>
             <Button
-              onClick={() => setEditingZone(null)}
+              onClick={() => {
+                setEditingZone(null);
+                setFormData({ name: "" });
+                setErrors({});
+              }}
               disabled={isCreating || isUpdating || isDeleting}
               className="gap-2"
             >
@@ -178,13 +198,18 @@ export default function Zones() {
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">
-              <Label htmlFor="name">Zone Name</Label>
-              <Input
-                id="name"
-                value={formData.name}
-                onChange={(e) => setFormData({ name: e.target.value })}
-                disabled={isCreating || isUpdating}
-              />
+              <FormField label="Zone Name" htmlFor="name" error={errors.name}>
+                <Input
+                  id="name"
+                  value={formData.name}
+                  onChange={(e) => {
+                    setFormData({ name: e.target.value });
+                    if (errors.name) setErrors((prev) => ({ ...prev, name: undefined }));
+                  }}
+                  disabled={isCreating || isUpdating}
+                  placeholder="Enter zone name"
+                />
+              </FormField>
             </div>
             <DialogFooter className="gap-2">
               <Button

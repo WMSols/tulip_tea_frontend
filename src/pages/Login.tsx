@@ -3,22 +3,19 @@ import { useNavigate } from "react-router-dom";
 import { Leaf, Lock, Eye, EyeOff, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
+import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { useLoginMutation } from "@/Redux/Api/authApi";
 import { setCredentials } from "@/Redux/Slices/authSlice";
 import { useAppDispatch } from "@/Redux/Hooks/hooks";
 import type { LoginRequest } from "@/types/auth";
 import { useToast } from "@/hooks/use-toast";
+import { loginSchema, validateForm, type FormErrors } from "@/lib/validations";
 
 export default function Login() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  // const [phone, setPhone] = useState("");
-  // const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  // const [rememberMe, setRememberMe] = useState(false);
-  // const [isLoading, setIsLoading] = useState(false);
 
   const dispatch = useAppDispatch();
   const [login, { isLoading }] = useLoginMutation();
@@ -28,22 +25,31 @@ export default function Login() {
     password: "",
   });
 
+  const [errors, setErrors] = useState<FormErrors<LoginRequest>>({});
+
+  const clearFieldError = (field: keyof LoginRequest) => {
+    if (errors[field]) setErrors((prev) => ({ ...prev, [field]: undefined }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const validationErrors = validateForm(loginSchema, form);
+    setErrors(validationErrors);
+    if (Object.keys(validationErrors).length > 0) return;
 
     try {
       const res = await login(form).unwrap();
       dispatch(setCredentials(res));
       localStorage.setItem("tulip_tea_auth", JSON.stringify(res));
       navigate("/", { replace: true });
-    } catch (err) {
+    } catch (err: any) {
       toast({
         variant: "destructive",
         title: "Login Failed",
         description:
           err?.data?.detail || "Something went wrong. Please try again.",
       });
-      console.error("Login failed:", err?.data?.detail);
     }
   };
 
@@ -95,13 +101,22 @@ export default function Login() {
                   type="tel"
                   placeholder="03XXXXXXXXX"
                   value={form.phone}
-                  onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                  // pattern="03[0-9]{9}"
+                  onChange={(e) => {
+                    setForm({ ...form, phone: e.target.value });
+                    clearFieldError("phone");
+                  }}
                   title="Enter a valid Pakistani phone number (e.g. 03175647123)"
-                  className="pl-10 h-11 bg-muted/30 border-border focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200"
-                  required
+                  className={cn(
+                    "pl-10 h-11 bg-muted/30 border-border focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200",
+                    errors.phone && "border-destructive focus:ring-destructive/20 focus:border-destructive",
+                  )}
                 />
               </div>
+              {errors.phone && (
+                <p className="text-[13px] text-destructive font-medium animate-fade-in">
+                  {errors.phone}
+                </p>
+              )}
             </div>
 
             {/* Password Field */}
@@ -116,11 +131,14 @@ export default function Login() {
                   type={showPassword ? "text" : "password"}
                   placeholder="••••••••"
                   value={form.password}
-                  onChange={(e) =>
-                    setForm({ ...form, password: e.target.value })
-                  }
-                  className="pl-10 pr-10 h-11 bg-muted/30 border-border focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200"
-                  required
+                  onChange={(e) => {
+                    setForm({ ...form, password: e.target.value });
+                    clearFieldError("password");
+                  }}
+                  className={cn(
+                    "pl-10 pr-10 h-11 bg-muted/30 border-border focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200",
+                    errors.password && "border-destructive focus:ring-destructive/20 focus:border-destructive",
+                  )}
                 />
                 <button
                   type="button"
@@ -134,33 +152,12 @@ export default function Login() {
                   )}
                 </button>
               </div>
+              {errors.password && (
+                <p className="text-[13px] text-destructive font-medium animate-fade-in">
+                  {errors.password}
+                </p>
+              )}
             </div>
-
-            {/* Remember Me & Forgot Password */}
-            {/* <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Checkbox
-                  id="remember"
-                  checked={rememberMe}
-                  onCheckedChange={(checked) =>
-                    setRememberMe(checked as boolean)
-                  }
-                  className="border-border data-[state=checked]:bg-primary data-[state=checked]:border-primary"
-                />
-                <label
-                  htmlFor="remember"
-                  className="text-sm text-muted-foreground cursor-pointer select-none"
-                >
-                  Remember me
-                </label>
-              </div>
-              <a
-                href="#"
-                className="text-sm text-primary hover:text-primary/80 font-medium transition-colors"
-              >
-                Forgot password?
-              </a>
-            </div> */}
 
             {/* Submit Button */}
             <Button

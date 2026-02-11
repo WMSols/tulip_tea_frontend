@@ -11,6 +11,7 @@ import { ShopsTable } from "@/features/shops/components/ShopsTable";
 import { ViewDialog } from "@/features/shops/components/ShopDialogs/ViewDialog";
 import { EditDialog } from "@/features/shops/components/ShopDialogs/EditDialog";
 import { ReassignDialog } from "@/features/shops/components/ShopDialogs/ReassignDialog";
+import { PageSkeleton } from "@/components/dashboard/PageSkeleton";
 
 /**
  * Shops Page Component
@@ -25,9 +26,13 @@ export default function Shops() {
   const { shops, zones, stats, isLoading } = useShopsData();
 
   // Order bookers for reassignment
-  const { data: orderBookers = [] } = useGetOrderBookersByDistributorQuery({
-    distributor_id: distributorId,
-  });
+  const { data: orderBookers = [], isLoading: isLoadingOB } =
+    useGetOrderBookersByDistributorQuery({
+      distributor_id: distributorId,
+    });
+
+  // Combined loading: wait for all data before showing page
+  const isPageLoading = isLoading || isLoadingOB;
 
   // Filtering logic
   const {
@@ -80,6 +85,19 @@ export default function Shops() {
     handleReassign(selectedShop.id, selectedOrderBookerId, closeReassignDialog);
   };
 
+  if (isPageLoading) {
+    return (
+      <PageSkeleton
+        statCards={4}
+        statColumns={4}
+        showFilters
+        tableColumns={6}
+        tableRows={6}
+        showHeader
+      />
+    );
+  }
+
   return (
     <div className="space-y-6 animate-fade-in">
       <ShopsHeader />
@@ -101,7 +119,7 @@ export default function Shops() {
 
       <ShopsTable
         data={filteredShops}
-        isLoading={isLoading}
+        isLoading={false}
         isVerifying={isVerifying}
         onView={handleViewShop}
         onApprove={handleApproveWithClose}

@@ -22,6 +22,8 @@ export interface UiShop {
   createdAt: string;
   assignedOrderBookerId: number | null;
   assignedOrderBookerName: string | null;
+  cnicFrontPhoto: string | null;
+  cnicBackPhoto: string | null;
 }
 
 export interface OrderBooker {

@@ -8,6 +8,7 @@ import { VisitsStats } from "@/features/visits/components/VisitsStats";
 import { VisitsFilters } from "@/features/visits/components/VisitsFilters";
 import { VisitsTable } from "@/features/visits/components/VisitsTable";
 import { VisitDetailsDialog } from "@/features/visits/components/VisitDetailsDialog";
+import { PageSkeleton } from "@/components/dashboard/PageSkeleton";
 
 /**
  * Visits Page Component
@@ -55,6 +56,19 @@ export default function Visits() {
     }
   }, [isError, toast]);
 
+  if (isLoading) {
+    return (
+      <PageSkeleton
+        statCards={3}
+        statColumns={3}
+        showFilters
+        tableColumns={6}
+        tableRows={8}
+        showHeader
+      />
+    );
+  }
+
   return (
     <div className="space-y-6 animate-fade-in">
       <VisitsHeader />
@@ -75,7 +89,7 @@ export default function Visits() {
 
       <VisitsTable
         data={filteredRows}
-        isLoading={isLoading}
+        isLoading={false}
         onViewDetails={handleViewDetails}
       />
 

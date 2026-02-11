@@ -2,6 +2,7 @@ import ProductsHeader from "@/features/products/components/ProductsHeader";
 import ProductsStats from "@/features/products/components/ProductsStats";
 import ProductsTable from "@/features/products/components/ProductsTable";
 import ProductFormDialog from "@/features/products/components/ProductFormDialog";
+import { PageSkeleton } from "@/components/dashboard/PageSkeleton";
 import { useProductsData } from "@/features/products/hooks/useProductsData";
 import { useProductActions } from "@/features/products/hooks/useProductActions";
 import { useProductDialog } from "@/features/products/hooks/useProductDialog";
@@ -50,6 +51,18 @@ export default function Products() {
   const onDelete = async (product: any) => {
     await handleDeleteProduct(product.id);
   };
+
+  if (isLoading) {
+    return (
+      <PageSkeleton
+        statCards={3}
+        statColumns={3}
+        tableColumns={5}
+        tableRows={6}
+        showHeader
+      />
+    );
+  }
 
   return (
     <div className="space-y-6 animate-fade-in">

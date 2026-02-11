@@ -5,6 +5,7 @@ import WarehousesGrid from "@/features/warehouses/components/WarehousesGrid";
 import CreateWarehouseDialog from "@/features/warehouses/components/CreateWarehouseDialog";
 import ManageWarehouseDialog from "@/features/warehouses/components/ManageDialog";
 import RemoveConfirmDialog from "@/features/warehouses/components/RemoveConfirmDialog";
+import { PageSkeleton } from "@/components/dashboard/PageSkeleton";
 import { useWarehousesData } from "@/features/warehouses/hooks/useWarehousesData";
 import { useWarehouseActions } from "@/features/warehouses/hooks/useWarehouseActions";
 import { useWarehouseDialogs } from "@/features/warehouses/hooks/useWarehouseDialogs";
@@ -26,6 +27,9 @@ export default function Warehouses() {
     isLoading,
     isLoadingZones,
   } = useWarehousesData(distributorId);
+
+  // Combined loading: wait for all dependent data before showing page
+  const isPageLoading = isLoading || isLoadingZones;
 
   // Actions
   const {
@@ -101,19 +105,31 @@ export default function Warehouses() {
     );
   };
 
+  if (isPageLoading) {
+    return (
+      <PageSkeleton
+        statCards={4}
+        statColumns={4}
+        contentType="cards"
+        cardCount={3}
+        showHeader
+      />
+    );
+  }
+
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Header with Create button */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <WarehousesHeader />
-        <CreateWarehouseDialog
+        {/* <CreateWarehouseDialog
           form={createForm}
           zones={zones}
           isLoadingZones={isLoadingZones}
           isCreating={isCreating}
           onFormChange={setCreateForm}
           onCreate={handleCreateWarehouse}
-        />
+        /> */}
       </div>
 
       {/* Stats */}
@@ -122,7 +138,7 @@ export default function Warehouses() {
       {/* Warehouses Grid */}
       <WarehousesGrid
         warehouses={warehouses}
-        isLoading={isLoading}
+        isLoading={false}
         onManage={handleOpenManage}
       />
 

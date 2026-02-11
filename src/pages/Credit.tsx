@@ -2,16 +2,13 @@ import { useState } from "react";
 import {
   CheckCircle,
   XCircle,
-  AlertCircle,
-  CreditCard,
-  TrendingUp,
-  Store,
   Eye,
   Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/dashboard/DataTable";
 import { StatusBadge } from "@/components/dashboard/StatusBadge";
+import { PageSkeleton } from "@/components/dashboard/PageSkeleton";
 import {
   Dialog,
   DialogContent,
@@ -34,11 +31,10 @@ import {
 import { CreditLimitRequest } from "@/types/creditLimit";
 
 export default function Credit() {
-  const distributorId = useAppSelector((s) => s.auth.user.id); // TODO: get from auth slice
+  const distributorId = useAppSelector((s) => s.auth.user.id);
   const { toast } = useToast();
 
-  const { data = [], isLoading } = useGetAllCreditLimitRequestsQuery();
-  console.log(data);
+  const { data = [], isLoading } = useGetAllCreditLimitRequestsQuery(distributorId);
 
   const [approveRequest, { isLoading: approving }] =
     useApproveCreditLimitRequestMutation();
@@ -179,6 +175,18 @@ export default function Credit() {
       },
     },
   ];
+
+  if (isLoading) {
+    return (
+      <PageSkeleton
+        statCards={0}
+        showFilters
+        tableColumns={5}
+        tableRows={6}
+        showHeader
+      />
+    );
+  }
 
   return (
     <div className="space-y-6 animate-fade-in">

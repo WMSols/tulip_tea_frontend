@@ -1,9 +1,10 @@
+import { useState } from "react";
 import { Banknote, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { StatusBadge } from "@/components/dashboard/StatusBadge";
+import { FormField } from "@/components/ui/FormField";
 import {
   Dialog,
   DialogContent,
@@ -14,6 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { formatCurrency } from "../utils/formatters";
 import { getRoleStatus, getRoleLabel } from "../utils/helpers";
+import { collectMoneySchema, validateForm, type FormErrors } from "@/lib/validations";
 import type { TeamWallet, CollectFormData } from "../types";
 
 interface CollectMoneyDialogProps {
@@ -33,8 +35,28 @@ export default function CollectMoneyDialog({
   onCollect,
   onClose,
 }: CollectMoneyDialogProps) {
+  const [errors, setErrors] = useState<FormErrors<CollectFormData>>({});
+
+  const clearFieldError = (field: keyof CollectFormData) => {
+    if (errors[field]) setErrors((prev) => ({ ...prev, [field]: undefined }));
+  };
+
+  const handleCollect = () => {
+    if (!collectTarget) return;
+    const schema = collectMoneySchema(collectTarget.current_balance);
+    const validationErrors = validateForm(schema as any, formData);
+    setErrors(validationErrors);
+    if (Object.keys(validationErrors).length > 0) return;
+    onCollect();
+  };
+
+  const handleClose = () => {
+    setErrors({});
+    onClose();
+  };
+
   return (
-    <Dialog open={!!collectTarget} onOpenChange={(open) => !open && onClose()}>
+    <Dialog open={!!collectTarget} onOpenChange={(open) => !open && handleClose()}>
       <DialogContent className="bg-card border-border rounded-xl sm:max-w-md">
         <DialogHeader>
           <DialogTitle>
@@ -57,34 +79,28 @@ export default function CollectMoneyDialog({
               </span>
             </div>
 
-            <div className="space-y-2">
-              <Label>Amount</Label>
+            <FormField label="Amount" error={errors.amount}>
               <Input
                 type="number"
                 placeholder="Enter amount"
                 min={1}
                 max={collectTarget.current_balance}
                 value={formData.amount}
-                onChange={(e) =>
+                onChange={(e) => {
                   onFormChange((prev) => ({
                     ...prev,
                     amount: e.target.value,
-                  }))
-                }
+                  }));
+                  clearFieldError("amount");
+                }}
                 className="bg-background"
               />
               <p className="text-xs text-muted-foreground">
                 Maximum: {formatCurrency(collectTarget.current_balance)}
               </p>
-            </div>
+            </FormField>
 
-            <div className="space-y-2">
-              <Label>
-                Description{" "}
-                <span className="text-muted-foreground font-normal">
-                  (optional)
-                </span>
-              </Label>
+            <FormField label="Description" optional>
               <Textarea
                 placeholder="Add a note..."
                 value={formData.description}
@@ -96,16 +112,16 @@ export default function CollectMoneyDialog({
                 }
                 className="bg-background"
               />
-            </div>
+            </FormField>
           </div>
         )}
 
         <DialogFooter className="gap-2 sm:gap-0">
-          <Button variant="outline" onClick={onClose} disabled={isCollecting}>
+          <Button variant="outline" onClick={handleClose} disabled={isCollecting}>
             Cancel
           </Button>
           <Button
-            onClick={onCollect}
+            onClick={handleCollect}
             disabled={isCollecting}
             className="gap-2"
           >

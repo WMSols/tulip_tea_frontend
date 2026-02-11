@@ -1,4 +1,4 @@
-import { Store, Phone, MapPin, CreditCard, Image } from "lucide-react";
+import { Store, Phone, MapPin, CreditCard, Image, UserCheck, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/dashboard/StatusBadge";
 import {
@@ -111,19 +111,71 @@ export function ViewDialog({
                 {formatCurrency(shop.balance)}
               </p>
             </div>
+
+            <div className="space-y-1">
+              <p className="text-sm text-muted-foreground flex items-center gap-1">
+                <UserCheck className="w-3 h-3" /> Assigned Order Booker
+              </p>
+              <p className="font-medium">
+                {shop.assignedOrderBookerName || (
+                  <span className="text-muted-foreground">Unassigned</span>
+                )}
+              </p>
+            </div>
+
+            <div className="space-y-1">
+              <p className="text-sm text-muted-foreground flex items-center gap-1">
+                <Wallet className="w-3 h-3" /> Available Credit
+              </p>
+              <p
+                className={`font-medium ${
+                  shop.creditLimit - shop.balance <= 0
+                    ? "text-destructive"
+                    : "text-success"
+                }`}
+              >
+                {formatCurrency(Math.max(shop.creditLimit - shop.balance, 0))}
+              </p>
+            </div>
           </div>
 
           {shop.status === "pending" && (
-            <div className="space-y-2 pt-4 border-t">
+            <div className="space-y-3 pt-4 border-t">
               <p className="text-sm text-muted-foreground flex items-center gap-1">
                 <Image className="w-3 h-3" /> CNIC Verification
               </p>
               <div className="grid grid-cols-2 gap-4">
-                <div className="aspect-video bg-muted rounded-lg flex items-center justify-center">
-                  <p className="text-xs text-muted-foreground">CNIC Front</p>
+                <div className="space-y-1.5">
+                  <p className="text-xs font-medium text-muted-foreground">Front</p>
+                  {shop.cnicFrontPhoto ? (
+                    <a href={shop.cnicFrontPhoto} target="_blank" rel="noopener noreferrer">
+                      <img
+                        src={shop.cnicFrontPhoto}
+                        alt="CNIC Front"
+                        className="aspect-video w-full object-cover rounded-lg border border-border hover:opacity-90 transition-opacity cursor-pointer"
+                      />
+                    </a>
+                  ) : (
+                    <div className="aspect-video bg-muted rounded-lg flex items-center justify-center">
+                      <p className="text-xs text-muted-foreground">Not provided</p>
+                    </div>
+                  )}
                 </div>
-                <div className="aspect-video bg-muted rounded-lg flex items-center justify-center">
-                  <p className="text-xs text-muted-foreground">CNIC Back</p>
+                <div className="space-y-1.5">
+                  <p className="text-xs font-medium text-muted-foreground">Back</p>
+                  {shop.cnicBackPhoto ? (
+                    <a href={shop.cnicBackPhoto} target="_blank" rel="noopener noreferrer">
+                      <img
+                        src={shop.cnicBackPhoto}
+                        alt="CNIC Back"
+                        className="aspect-video w-full object-cover rounded-lg border border-border hover:opacity-90 transition-opacity cursor-pointer"
+                      />
+                    </a>
+                  ) : (
+                    <div className="aspect-video bg-muted rounded-lg flex items-center justify-center">
+                      <p className="text-xs text-muted-foreground">Not provided</p>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

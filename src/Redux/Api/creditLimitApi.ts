@@ -7,8 +7,9 @@ import {
 
 export const creditLimitApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    getAllCreditLimitRequests: builder.query<CreditLimitRequest[], void>({
-      query: () => "/credit-limit-requests/all",
+    getAllCreditLimitRequests: builder.query<CreditLimitRequest[], number>({
+      query: (distributorId) =>
+        `/credit-limit-requests/all?distributor_id=${distributorId}`,
       providesTags: ["CreditLimitRequests"],
     }),
 

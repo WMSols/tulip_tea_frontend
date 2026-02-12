@@ -16,6 +16,7 @@ import Warehouses from "@/pages/Warehouses";
 import Products from "@/pages/Products";
 import Visits from "@/pages/Visits";
 import Wallet from "@/pages/Wallet";
+import Subsidy from "@/pages/Subsidy";
 import Login from "@/pages/Login";
 import NotFound from "@/pages/NotFound";
 
@@ -43,6 +44,7 @@ const App = () => (
               <Route path="/products" element={<Products />} />
               <Route path="/visits" element={<Visits />} />
               <Route path="/wallet" element={<Wallet />} />
+              <Route path="/subsidy" element={<Subsidy />} />
             </Route>
           </Route>
           <Route path="*" element={<NotFound />} />

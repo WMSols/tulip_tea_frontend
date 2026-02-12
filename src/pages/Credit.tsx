@@ -4,6 +4,7 @@ import {
   XCircle,
   Eye,
   Loader2,
+  Pencil,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/dashboard/DataTable";
@@ -17,6 +18,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -25,6 +27,7 @@ import { useAppSelector } from "@/Redux/Hooks/hooks";
 
 import {
   useGetAllCreditLimitRequestsQuery,
+  useUpdateCreditLimitRequestMutation,
   useApproveCreditLimitRequestMutation,
   useRejectCreditLimitRequestMutation,
 } from "@/Redux/Api/creditLimitApi";
@@ -40,6 +43,8 @@ export default function Credit() {
     useApproveCreditLimitRequestMutation();
   const [rejectRequest, { isLoading: rejecting }] =
     useRejectCreditLimitRequestMutation();
+  const [updateRequest, { isLoading: updating }] =
+    useUpdateCreditLimitRequestMutation();
 
   const [activeTab, setActiveTab] = useState<
     "all" | "pending" | "approved" | "disapproved"
@@ -54,6 +59,12 @@ export default function Credit() {
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [viewRemarks, setViewRemarks] = useState<string>("");
   const [viewShop, setViewShop] = useState<string>("");
+
+  // Edit modal state
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editTarget, setEditTarget] = useState<CreditLimitRequest | null>(null);
+  const [editCreditLimit, setEditCreditLimit] = useState<string>("");
+  const [editRemarks, setEditRemarks] = useState<string>("");
 
   const handleAction = (
     request: CreditLimitRequest,
@@ -94,6 +105,44 @@ export default function Credit() {
       }
 
       setIsDialogOpen(false);
+    } catch {
+      toast({
+        title: "Something went wrong",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleEdit = (request: CreditLimitRequest) => {
+    setEditTarget(request);
+    setEditCreditLimit(String(request.requested_credit_limit));
+    setEditRemarks(request.remarks || "");
+    setIsEditDialogOpen(true);
+  };
+
+  const handleEditSubmit = async () => {
+    if (!editTarget) return;
+    const creditLimit = Number(editCreditLimit);
+    if (!creditLimit || creditLimit <= 0) {
+      toast({
+        title: "Invalid Amount",
+        description: "Please enter a valid credit limit.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      await updateRequest({
+        requestId: editTarget.id,
+        body: {
+          requested_credit_limit: creditLimit,
+          ...(editRemarks.trim() ? { remarks: editRemarks.trim() } : {}),
+        },
+      }).unwrap();
+
+      toast({ title: "Request Updated", description: "Credit limit request has been updated." });
+      setIsEditDialogOpen(false);
     } catch {
       toast({
         title: "Something went wrong",
@@ -212,6 +261,14 @@ export default function Credit() {
               <Button
                 size="icon"
                 variant="ghost"
+                onClick={() => handleEdit(request)}
+                title="Edit Request"
+              >
+                <Pencil className="w-4 h-4 text-muted-foreground" />
+              </Button>
+              <Button
+                size="icon"
+                variant="ghost"
                 onClick={() => handleAction(request, "approve")}
               >
                 <CheckCircle className="w-4 h-4 text-success" />
@@ -275,6 +332,52 @@ export default function Credit() {
 
           <DialogFooter>
             <Button onClick={() => setIsViewDialogOpen(false)}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Credit Limit Request */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Credit Limit Request</DialogTitle>
+            <DialogDescription>{editTarget?.shop_name}</DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-credit-limit">
+                Requested Credit Limit <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="edit-credit-limit"
+                type="number"
+                min={0}
+                value={editCreditLimit}
+                onChange={(e) => setEditCreditLimit(e.target.value)}
+                placeholder="Enter credit limit"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="edit-remarks">Remarks</Label>
+              <Textarea
+                id="edit-remarks"
+                value={editRemarks}
+                onChange={(e) => setEditRemarks(e.target.value)}
+                placeholder="Optional remarks..."
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleEditSubmit} disabled={updating}>
+              {updating && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              Update
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

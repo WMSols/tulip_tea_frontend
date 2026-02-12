@@ -61,6 +61,7 @@ export const creditLimitApi = baseApi.injectEndpoints({
 
 export const {
   useGetAllCreditLimitRequestsQuery,
+  useUpdateCreditLimitRequestMutation,
   useApproveCreditLimitRequestMutation,
   useRejectCreditLimitRequestMutation,
 } = creditLimitApi;

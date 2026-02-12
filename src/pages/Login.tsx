@@ -34,9 +34,9 @@ export default function Login() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const validationErrors = validateForm(loginSchema, form);
-    setErrors(validationErrors);
-    if (Object.keys(validationErrors).length > 0) return;
+    // const validationErrors = validateForm(loginSchema, form);
+    // setErrors(validationErrors);
+    // if (Object.keys(validationErrors).length > 0) return;
 
     try {
       const res = await login(form).unwrap();

@@ -51,9 +51,16 @@ export function ReassignDialog({
           <Select
             value={selectedOrderBookerId?.toString() || ""}
             onValueChange={(value) => onOrderBookerChange(Number(value))}
+            disabled={orderBookers.length === 0}
           >
             <SelectTrigger>
-              <SelectValue placeholder="Select order booker" />
+              <SelectValue
+                placeholder={
+                  orderBookers.length === 0
+                    ? "No order bookers in this zone"
+                    : "Select order booker"
+                }
+              />
             </SelectTrigger>
 
             <SelectContent>

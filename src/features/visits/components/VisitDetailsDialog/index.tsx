@@ -12,7 +12,12 @@ import {
 import type { VisitRow } from "../../types";
 import type { OrderDto } from "@/types/visits";
 import { formatDateTime } from "../../utils/formatters";
-import { zoneLabel, getVisitDisplayTime } from "../../utils/helpers";
+import {
+  zoneLabel,
+  getVisitDisplayTime,
+  formatVisitTypeLabel,
+  getVisitTypeBadgeStatus,
+} from "../../utils/helpers";
 import { LocationLinks } from "./LocationLinks";
 import { PhotosSection } from "./PhotosSection";
 import { ShopVisitCard } from "./ShopVisitCard";
@@ -82,19 +87,18 @@ export function VisitDetailsDialog({
                 <p className="text-sm text-muted-foreground">Type</p>
                 {visit.kind === "delivery" ? (
                   <StatusBadge status="success" label="Delivery" />
+                ) : visit.visit_types.length > 0 ? (
+                  <div className="flex flex-wrap gap-1">
+                    {visit.visit_types.map((t) => (
+                      <StatusBadge
+                        key={t}
+                        status={getVisitTypeBadgeStatus(t)}
+                        label={formatVisitTypeLabel(t)}
+                      />
+                    ))}
+                  </div>
                 ) : (
-                  <StatusBadge
-                    status={
-                      visit.visit_types.includes("order_booking")
-                        ? "info"
-                        : "neutral"
-                    }
-                    label={
-                      visit.visit_types.includes("order_booking")
-                        ? "Order Booking"
-                        : "Shop Visit"
-                    }
-                  />
+                  <StatusBadge status="neutral" label="Shop Visit" />
                 )}
               </div>
 

@@ -2,6 +2,7 @@ import { Eye, CheckCircle, XCircle, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/dashboard/DataTable";
 import { StatusBadge } from "@/components/dashboard/StatusBadge";
+import { DeleteConfirmDialog } from "@/components/dashboard/DeleteConfirmDialog";
 import type { UiShop } from "../types";
 import { formatCurrency } from "../utils/formatters";
 import { getShopBadgeStatus, isBalanceOverdue } from "../utils/helpers";
@@ -11,20 +12,24 @@ interface ShopsTableProps {
   data: UiShop[];
   isLoading: boolean;
   isVerifying: boolean;
+  isDeleting: boolean;
   onView: (shop: UiShop) => void;
   onApprove: (shopId: number) => void;
   onReject: (shopId: number) => void;
   onReassign: (shop: UiShop) => void;
+  onDelete: (shopId: number) => void;
 }
 
 export function ShopsTable({
   data,
   isLoading,
   isVerifying,
+  isDeleting,
   onView,
   onApprove,
   onReject,
   onReassign,
+  onDelete,
 }: ShopsTableProps) {
   const columns = [
     { key: "name", label: "Shop Name", sortable: true },
@@ -142,6 +147,11 @@ export function ShopsTable({
               <Users className="w-4 h-4" />
             </Button>
           )}
+
+          <DeleteConfirmDialog
+            onConfirm={() => onDelete(shop.id)}
+            loading={isDeleting}
+          />
         </div>
       )}
     />

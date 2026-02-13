@@ -9,12 +9,20 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { ActiveTab, Zone } from "../types";
 import { TAB_OPTIONS } from "../utils/constants";
 
+interface RouteOption {
+  id: number;
+  name: string;
+}
+
 interface ShopsFiltersProps {
   activeTab: ActiveTab;
   onTabChange: (tab: ActiveTab) => void;
   filterZone: string;
   onZoneChange: (zone: string) => void;
   zoneOptions: Zone[];
+  filterRoute: string;
+  onRouteChange: (route: string) => void;
+  routeOptions: RouteOption[];
 }
 
 export function ShopsFilters({
@@ -23,6 +31,9 @@ export function ShopsFilters({
   filterZone,
   onZoneChange,
   zoneOptions,
+  filterRoute,
+  onRouteChange,
+  routeOptions,
 }: ShopsFiltersProps) {
   return (
     <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
@@ -52,6 +63,30 @@ export function ShopsFilters({
           {zoneOptions.map((z) => (
             <SelectItem key={z.id} value={z.name}>
               {z.name}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+
+      <Select
+        value={filterRoute}
+        onValueChange={onRouteChange}
+        disabled={routeOptions.length === 0}
+      >
+        <SelectTrigger className="w-44 bg-card border-border">
+          <SelectValue
+            placeholder={
+              routeOptions.length === 0
+                ? "No routes available"
+                : "Filter by Route"
+            }
+          />
+        </SelectTrigger>
+        <SelectContent className="bg-card border-border">
+          <SelectItem value="all">All Routes</SelectItem>
+          {routeOptions.map((r) => (
+            <SelectItem key={r.id} value={r.name}>
+              {r.name}
             </SelectItem>
           ))}
         </SelectContent>

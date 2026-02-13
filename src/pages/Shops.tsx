@@ -1,5 +1,8 @@
 import { useAppSelector } from "@/Redux/Hooks/hooks";
 import { useGetOrderBookersByDistributorQuery } from "@/Redux/Api/orderBookerApi";
+import { useGetRoutesQuery } from "@/Redux/Api/routesApi";
+import { useDeleteShopMutation } from "@/Redux/Api/shopsApi";
+import { useToast } from "@/hooks/use-toast";
 import { useShopsData } from "@/features/shops/hooks/useShopsData";
 import { useShopFilters } from "@/features/shops/hooks/useShopFilters";
 import { useShopActions } from "@/features/shops/hooks/useShopActions";
@@ -20,10 +23,14 @@ import { PageSkeleton } from "@/components/dashboard/PageSkeleton";
  * Orchestrates data fetching, filtering, and dialog management.
  */
 export default function Shops() {
+  const { toast } = useToast();
   const distributorId = useAppSelector((s) => s.auth.user.id);
 
   // Data fetching and transformation
   const { shops, zones, stats, isLoading } = useShopsData();
+
+  // Delete shop
+  const [deleteShop, { isLoading: isDeleting }] = useDeleteShopMutation();
 
   // Order bookers for reassignment
   const { data: orderBookers = [], isLoading: isLoadingOB } =
@@ -31,8 +38,14 @@ export default function Shops() {
       distributor_id: distributorId,
     });
 
+  // Routes for filtering
+  const { data: routes = [], isLoading: isLoadingRoutes } = useGetRoutesQuery({
+    filterType: "distributor",
+    filterId: distributorId,
+  });
+
   // Combined loading: wait for all data before showing page
-  const isPageLoading = isLoading || isLoadingOB;
+  const isPageLoading = isLoading || isLoadingOB || isLoadingRoutes;
 
   // Filtering logic
   const {
@@ -40,9 +53,12 @@ export default function Shops() {
     setActiveTab,
     filterZone,
     setFilterZone,
+    filterRoute,
+    setFilterRoute,
     zoneOptions,
+    routeOptions,
     filteredShops,
-  } = useShopFilters(shops, zones);
+  } = useShopFilters(shops, zones, routes);
 
   // Action handlers (approve, reject, reassign)
   const {
@@ -85,6 +101,20 @@ export default function Shops() {
     handleReassign(selectedShop.id, selectedOrderBookerId, closeReassignDialog);
   };
 
+  // Delete shop handler
+  const handleDeleteShop = async (shopId: number) => {
+    try {
+      await deleteShop(shopId).unwrap();
+      toast({ title: "Shop Deleted" });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error?.data?.detail || "Failed to delete shop",
+        variant: "destructive",
+      });
+    }
+  };
+
   if (isPageLoading) {
     return (
       <PageSkeleton
@@ -115,16 +145,21 @@ export default function Shops() {
         filterZone={filterZone}
         onZoneChange={setFilterZone}
         zoneOptions={zoneOptions}
+        filterRoute={filterRoute}
+        onRouteChange={setFilterRoute}
+        routeOptions={routeOptions}
       />
 
       <ShopsTable
         data={filteredShops}
         isLoading={false}
         isVerifying={isVerifying}
+        isDeleting={isDeleting}
         onView={handleViewShop}
         onApprove={handleApproveWithClose}
         onReject={handleRejectWithClose}
         onReassign={handleReassignShop}
+        onDelete={handleDeleteShop}
       />
 
       <ViewDialog
@@ -144,7 +179,11 @@ export default function Shops() {
       <ReassignDialog
         isOpen={isReassignDialogOpen}
         onClose={closeReassignDialog}
-        orderBookers={orderBookers}
+        orderBookers={
+          selectedShop
+            ? orderBookers.filter((ob) => ob.zone_id === selectedShop.zoneId)
+            : []
+        }
         selectedOrderBookerId={selectedOrderBookerId}
         onOrderBookerChange={setSelectedOrderBookerId}
         onReassign={handleReassignWithClose}

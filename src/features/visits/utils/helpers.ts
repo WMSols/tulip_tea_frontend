@@ -20,6 +20,33 @@ export function mapsLink(
 }
 
 /**
+ * Formats a visit type slug into a readable label
+ */
+export function formatVisitTypeLabel(type: string): string {
+  const labels: Record<string, string> = {
+    order_booking: "Order Booking",
+    daily_collections: "Daily Collections",
+    delivery: "Delivery",
+    recovery: "Recovery",
+    complaint: "Complaint",
+    stock_check: "Stock Check",
+  };
+  return labels[type] ?? type.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+/**
+ * Gets badge status for a visit type
+ */
+export function getVisitTypeBadgeStatus(
+  type: string,
+): "info" | "warning" | "success" | "neutral" {
+  if (type === "order_booking") return "info";
+  if (type === "daily_collections") return "warning";
+  if (type === "delivery") return "success";
+  return "neutral";
+}
+
+/**
  * Gets the appropriate badge status for a delivery
  */
 export function getDeliveryBadgeStatus(

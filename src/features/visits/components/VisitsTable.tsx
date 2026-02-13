@@ -8,6 +8,8 @@ import {
   zoneLabel,
   getDeliveryBadgeStatus,
   getVisitDisplayTime,
+  formatVisitTypeLabel,
+  getVisitTypeBadgeStatus,
 } from "../utils/helpers";
 
 interface VisitsTableProps {
@@ -48,12 +50,19 @@ export function VisitsTable({
         if (row.kind === "delivery") {
           return <StatusBadge status="success" label="Delivery" />;
         }
-        const isOrderBooking = row.visit_types.includes("order_booking");
+        if (row.visit_types.length === 0) {
+          return <StatusBadge status="neutral" label="Shop Visit" />;
+        }
         return (
-          <StatusBadge
-            status={isOrderBooking ? "info" : "neutral"}
-            label={isOrderBooking ? "Order Booking" : "Shop Visit"}
-          />
+          <div className="flex flex-wrap gap-1">
+            {row.visit_types.map((t) => (
+              <StatusBadge
+                key={t}
+                status={getVisitTypeBadgeStatus(t)}
+                label={formatVisitTypeLabel(t)}
+              />
+            ))}
+          </div>
         );
       },
     },

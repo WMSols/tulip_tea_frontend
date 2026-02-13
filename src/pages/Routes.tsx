@@ -686,7 +686,7 @@ export default function Routes() {
               <Select
                 value={formData.zone_id}
                 onValueChange={(value) => {
-                  setFormData({ ...formData, zone_id: value });
+                  setFormData({ ...formData, zone_id: value, order_booker_id: "" });
                   clearFieldError("zone_id");
                 }}
               >
@@ -713,17 +713,34 @@ export default function Routes() {
                     order_booker_id: value,
                   })
                 }
+                disabled={!formData.zone_id}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select Order Booker (Optional)" />
+                  <SelectValue
+                    placeholder={
+                      !formData.zone_id
+                        ? "Select a zone first"
+                        : orderBookers.filter(
+                            (ob: OrderBooker) =>
+                              ob.zone_id === Number(formData.zone_id),
+                          ).length === 0
+                          ? "No order bookers in this zone"
+                          : "Select Order Booker (Optional)"
+                    }
+                  />
                 </SelectTrigger>
 
                 <SelectContent>
-                  {orderBookers.map((ob: OrderBooker) => (
-                    <SelectItem key={ob.id} value={String(ob.id)}>
-                      {ob.name}
-                    </SelectItem>
-                  ))}
+                  {orderBookers
+                    .filter(
+                      (ob: OrderBooker) =>
+                        ob.zone_id === Number(formData.zone_id),
+                    )
+                    .map((ob: OrderBooker) => (
+                      <SelectItem key={ob.id} value={String(ob.id)}>
+                        {ob.name}
+                      </SelectItem>
+                    ))}
                 </SelectContent>
               </Select>
             </FormField>

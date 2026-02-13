@@ -1,16 +1,17 @@
 import { StatusBadge } from "@/components/dashboard/StatusBadge";
 import type { ShopVisitRow } from "../../types";
 import { formatDateTime } from "../../utils/formatters";
-import { getStaffRoleLabel } from "../../utils/helpers";
+import {
+  getStaffRoleLabel,
+  formatVisitTypeLabel,
+  getVisitTypeBadgeStatus,
+} from "../../utils/helpers";
 
 interface ShopVisitCardProps {
   visit: ShopVisitRow;
 }
 
 export function ShopVisitCard({ visit }: ShopVisitCardProps) {
-  const isOrderBooking = visit.visit_types.includes("order_booking");
-  const badgeStatus = isOrderBooking ? "info" : "neutral";
-  const badgeLabel = isOrderBooking ? "Order Booking" : "Shop Visit";
   const roleLabel = getStaffRoleLabel(visit.staff_role);
 
   return (
@@ -31,7 +32,19 @@ export function ShopVisitCard({ visit }: ShopVisitCardProps) {
         </div>
 
         <div className="shrink-0 flex flex-col items-end gap-2">
-          <StatusBadge status={badgeStatus as any} label={badgeLabel} />
+          <div className="flex flex-wrap gap-1 justify-end">
+            {visit.visit_types.length > 0 ? (
+              visit.visit_types.map((t) => (
+                <StatusBadge
+                  key={t}
+                  status={getVisitTypeBadgeStatus(t)}
+                  label={formatVisitTypeLabel(t)}
+                />
+              ))
+            ) : (
+              <StatusBadge status="neutral" label="Shop Visit" />
+            )}
+          </div>
           <div className="text-xs text-muted-foreground">
             Photos{" "}
             <span className="font-medium tabular-nums text-foreground">
@@ -69,7 +82,7 @@ export function ShopVisitCard({ visit }: ShopVisitCardProps) {
                 <td className="px-3 py-2 text-muted-foreground">Visit Types</td>
                 <td className="px-3 py-2 text-right font-medium break-words">
                   {visit.visit_types.length
-                    ? visit.visit_types.join(", ")
+                    ? visit.visit_types.map(formatVisitTypeLabel).join(", ")
                     : "-"}
                 </td>
               </tr>

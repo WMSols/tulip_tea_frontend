@@ -13,6 +13,7 @@ export interface UiShop {
   name: string;
   ownerName: string;
   phone: string;
+  zoneId: number;
   zone: string;
   routes: ShopRoute[];
   gps: string;

@@ -13,6 +13,7 @@ export function mapApiShopToUi(
     name: shop.name,
     ownerName: shop.owner_name,
     phone: shop.owner_phone,
+    zoneId: shop.zone_id,
     zone: zoneMap[shop.zone_id] || `Zone ${shop.zone_id}`,
     routes:
       shop.routes?.map((r) => ({

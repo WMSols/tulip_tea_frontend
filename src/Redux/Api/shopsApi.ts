@@ -32,6 +32,14 @@ export const shopsApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ["Shops"],
     }),
+
+    deleteShop: builder.mutation<void, number>({
+      query: (shopId) => ({
+        url: `/shops/${shopId}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: ["Shops"],
+    }),
   }),
 });
 
@@ -40,4 +48,5 @@ export const {
   useGetPendingShopsQuery,
   useVerifyShopMutation,
   useReassignShopMutation,
+  useDeleteShopMutation,
 } = shopsApi;

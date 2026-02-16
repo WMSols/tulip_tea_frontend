@@ -1,3 +1,5 @@
+import type { ShopRouteInfo } from "@/types/visits";
+
 export type ActiveTab = "all" | "order_booking" | "deliveries";
 
 export type VisitRow =
@@ -8,6 +10,7 @@ export type VisitRow =
       shop_id: number;
       shop_name: string;
       shop_zone_id: number;
+      shop_routes: ShopRouteInfo[];
       staff_name: string;
       staff_role: "order_booker" | "delivery_man" | "unknown";
       visit_types: string[];
@@ -27,6 +30,7 @@ export type VisitRow =
       shop_id: number;
       shop_name: string;
       shop_zone_id: number;
+      shop_routes: ShopRouteInfo[];
       delivery_man_name: string;
       status: string;
       picked_up_at: string | null;

@@ -256,7 +256,7 @@ export default function Credit() {
         data={filteredRequests}
         columns={columns}
         actions={(request) =>
-          request.status === "pending" && (
+          (request.status === "pending" || request.status === "approved") && (
             <div className="flex gap-2">
               <Button
                 size="icon"
@@ -266,20 +266,24 @@ export default function Credit() {
               >
                 <Pencil className="w-4 h-4 text-muted-foreground" />
               </Button>
-              <Button
-                size="icon"
-                variant="ghost"
-                onClick={() => handleAction(request, "approve")}
-              >
-                <CheckCircle className="w-4 h-4 text-success" />
-              </Button>
-              <Button
-                size="icon"
-                variant="ghost"
-                onClick={() => handleAction(request, "disapproved")}
-              >
-                <XCircle className="w-4 h-4 text-destructive" />
-              </Button>
+              {request.status === "pending" && (
+                <>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    onClick={() => handleAction(request, "approve")}
+                  >
+                    <CheckCircle className="w-4 h-4 text-success" />
+                  </Button>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    onClick={() => handleAction(request, "disapproved")}
+                  >
+                    <XCircle className="w-4 h-4 text-destructive" />
+                  </Button>
+                </>
+              )}
             </div>
           )
         }

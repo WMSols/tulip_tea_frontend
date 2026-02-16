@@ -44,6 +44,10 @@ export default function InventorySection({
   onAddInventory,
   onUpdateInventory,
 }: InventorySectionProps) {
+  const existingProductIds = new Set(
+    inventory.map((item) => item.product_id),
+  );
+
   return (
     <div className="pt-4 border-t border-border">
       <div className="flex items-center justify-between mb-3">
@@ -71,8 +75,13 @@ export default function InventorySection({
             </SelectTrigger>
             <SelectContent className="bg-card border-border">
               {products.map((p) => (
-                <SelectItem key={p.id} value={String(p.id)}>
+                <SelectItem
+                  key={p.id}
+                  value={String(p.id)}
+                  disabled={existingProductIds.has(p.id)}
+                >
                   {getProductName(p)}
+                  {existingProductIds.has(p.id) ? " (already in inventory)" : ""}
                 </SelectItem>
               ))}
             </SelectContent>

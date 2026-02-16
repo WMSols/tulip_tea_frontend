@@ -1,11 +1,18 @@
 export type ISODateTimeString = string;
 
+export interface ShopRouteInfo {
+  route_id: number;
+  route_name: string;
+  zone_id: number;
+}
+
 /** GET shop-visits/all?limit=1000 */
 export interface ShopVisitDto {
   id: number;
   shop_id: number;
   shop_name: string;
   shop_zone_id: number;
+  shop_routes: ShopRouteInfo[];
 
   order_booker_id: number | null;
   order_booker_name: string | null;

@@ -1,5 +1,6 @@
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { useGetZonesQuery } from "@/Redux/Api/zonesApi";
 import { useVisitsData } from "@/features/visits/hooks/useVisitsData";
 import { useVisitFilters } from "@/features/visits/hooks/useVisitFilters";
 import { useVisitDetails } from "@/features/visits/hooks/useVisitDetails";
@@ -23,16 +24,28 @@ export default function Visits() {
   // Data fetching and transformation
   const { rows, isLoading, isError } = useVisitsData();
 
+  // Zones for filter names and display
+  const { data: zones = [] } = useGetZonesQuery();
+
+  const zoneMap = useMemo(() => {
+    const map: Record<number, string> = {};
+    for (const z of zones) map[z.id] = z.name;
+    return map;
+  }, [zones]);
+
   // Filtering and stats
   const {
     activeTab,
     setActiveTab,
     filterZone,
     setFilterZone,
+    filterRoute,
+    setFilterRoute,
     zoneOptions,
+    routeOptions,
     filteredRows,
     stats,
-  } = useVisitFilters(rows);
+  } = useVisitFilters(rows, zones);
 
   // Details dialog management
   const {
@@ -85,12 +98,16 @@ export default function Visits() {
         filterZone={filterZone}
         onZoneChange={setFilterZone}
         zoneOptions={zoneOptions}
+        filterRoute={filterRoute}
+        onRouteChange={setFilterRoute}
+        routeOptions={routeOptions}
       />
 
       <VisitsTable
         data={filteredRows}
         isLoading={false}
         onViewDetails={handleViewDetails}
+        zoneMap={zoneMap}
       />
 
       <VisitDetailsDialog
@@ -100,6 +117,7 @@ export default function Visits() {
         orderData={orderData}
         isOrderFetching={isOrderFetching}
         isOrderError={isOrderError}
+        zoneMap={zoneMap}
       />
     </div>
   );

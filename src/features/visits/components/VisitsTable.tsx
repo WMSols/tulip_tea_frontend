@@ -16,12 +16,14 @@ interface VisitsTableProps {
   data: VisitRow[];
   isLoading: boolean;
   onViewDetails: (row: VisitRow) => void;
+  zoneMap?: Record<number, string>;
 }
 
 export function VisitsTable({
   data,
   isLoading,
   onViewDetails,
+  zoneMap = {},
 }: VisitsTableProps) {
   const columns = [
     {
@@ -78,7 +80,10 @@ export function VisitsTable({
       label: "Zone",
       className: "hidden lg:table-cell",
       render: (row: VisitRow) => (
-        <StatusBadge status="neutral" label={zoneLabel(row.shop_zone_id)} />
+        <StatusBadge
+          status="neutral"
+          label={zoneMap[row.shop_zone_id] || zoneLabel(row.shop_zone_id)}
+        />
       ),
     },
     {

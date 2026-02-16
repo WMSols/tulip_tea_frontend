@@ -7,8 +7,17 @@ import {
 
 export const productsApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    getProducts: builder.query<Product[], void>({
-      query: () => "/products/",
+    getProducts: builder.query<
+      Product[],
+      { include_inactive?: boolean } | void
+    >({
+      query: (arg) => ({
+        url: "/products/",
+        params:
+          arg && typeof arg.include_inactive === "boolean"
+            ? { include_inactive: arg.include_inactive }
+            : undefined,
+      }),
       providesTags: ["Products"],
     }),
 

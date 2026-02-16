@@ -1,15 +1,22 @@
+import { useState } from "react";
 import ProductsHeader from "@/features/products/components/ProductsHeader";
 import ProductsStats from "@/features/products/components/ProductsStats";
 import ProductsTable from "@/features/products/components/ProductsTable";
 import ProductFormDialog from "@/features/products/components/ProductFormDialog";
 import { PageSkeleton } from "@/components/dashboard/PageSkeleton";
-import { useProductsData } from "@/features/products/hooks/useProductsData";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  useProductsData,
+  type ProductViewFilter,
+} from "@/features/products/hooks/useProductsData";
 import { useProductActions } from "@/features/products/hooks/useProductActions";
 import { useProductDialog } from "@/features/products/hooks/useProductDialog";
 
 export default function Products() {
-  // Fetch data
-  const { products, stats, isLoading } = useProductsData();
+  const [view, setView] = useState<ProductViewFilter>("all");
+
+  // Fetch data (include_inactive and filtered list by view)
+  const { products, stats, isLoading } = useProductsData({ view });
 
   // Actions
   const {
@@ -80,10 +87,19 @@ export default function Products() {
         />
       </div>
 
-      {/* Stats */}
+      {/* Active / Inactive toggle */}
+      <Tabs value={view} onValueChange={(v) => setView(v as ProductViewFilter)}>
+        <TabsList>
+          <TabsTrigger value="all">All</TabsTrigger>
+          <TabsTrigger value="active">Active</TabsTrigger>
+          <TabsTrigger value="inactive">Inactive</TabsTrigger>
+        </TabsList>
+      </Tabs>
+
+      {/* Stats (reflect current view) */}
       <ProductsStats stats={stats} />
 
-      {/* Table */}
+      {/* Table (filtered by view; status badge from product.is_active) */}
       <ProductsTable
         products={products}
         isLoading={isLoading}

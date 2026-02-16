@@ -31,6 +31,7 @@ interface VisitDetailsDialogProps {
   orderData: OrderDto | undefined;
   isOrderFetching: boolean;
   isOrderError: boolean;
+  zoneMap?: Record<number, string>;
 }
 
 export function VisitDetailsDialog({
@@ -40,6 +41,7 @@ export function VisitDetailsDialog({
   orderData,
   isOrderFetching,
   isOrderError,
+  zoneMap = {},
 }: VisitDetailsDialogProps) {
   if (!visit) return null;
 
@@ -79,7 +81,7 @@ export function VisitDetailsDialog({
                 <p className="text-sm text-muted-foreground">Zone</p>
                 <StatusBadge
                   status="neutral"
-                  label={zoneLabel(visit.shop_zone_id)}
+                  label={zoneMap[visit.shop_zone_id] || zoneLabel(visit.shop_zone_id)}
                 />
               </div>
 

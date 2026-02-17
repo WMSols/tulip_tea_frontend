@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
+  <rect width="32" height="32" rx="8" fill="#FB923C"/>
+  <!-- Leaf: short stem, wide blade, pointed tip -->
+  <path d="M16 26L16 21C7 21 5 11 16 5C27 11 25 21 16 21Z" fill="white"/>
+</svg>

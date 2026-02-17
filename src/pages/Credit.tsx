@@ -5,6 +5,7 @@ import {
   Eye,
   Loader2,
   Pencil,
+  Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/dashboard/DataTable";
@@ -30,7 +31,9 @@ import {
   useUpdateCreditLimitRequestMutation,
   useApproveCreditLimitRequestMutation,
   useRejectCreditLimitRequestMutation,
+  useDeleteCreditLimitRequestMutation,
 } from "@/Redux/Api/creditLimitApi";
+import { useUpdateShopMutation } from "@/Redux/Api/shopsApi";
 import { CreditLimitRequest } from "@/types/creditLimit";
 
 export default function Credit() {
@@ -45,6 +48,9 @@ export default function Credit() {
     useRejectCreditLimitRequestMutation();
   const [updateRequest, { isLoading: updating }] =
     useUpdateCreditLimitRequestMutation();
+  const [updateShop, { isLoading: updatingShop }] = useUpdateShopMutation();
+  const [deleteCreditLimitRequest, { isLoading: deleting }] =
+    useDeleteCreditLimitRequestMutation();
 
   const [activeTab, setActiveTab] = useState<
     "all" | "pending" | "approved" | "disapproved"
@@ -60,11 +66,20 @@ export default function Credit() {
   const [viewRemarks, setViewRemarks] = useState<string>("");
   const [viewShop, setViewShop] = useState<string>("");
 
-  // Edit modal state
+  // Edit modal state (pending: edit credit limit request)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<CreditLimitRequest | null>(null);
   const [editCreditLimit, setEditCreditLimit] = useState<string>("");
   const [editRemarks, setEditRemarks] = useState<string>("");
+
+  // Edit shop credit limit modal (approved only — updates shop via PUT /shops/{shop_id})
+  const [isEditShopDialogOpen, setIsEditShopDialogOpen] = useState(false);
+  const [editShopTarget, setEditShopTarget] =
+    useState<CreditLimitRequest | null>(null);
+  const [editShopCreditLimit, setEditShopCreditLimit] = useState<string>("");
+
+  // Delete (disapproved only)
+  const [deleteTarget, setDeleteTarget] = useState<CreditLimitRequest | null>(null);
 
   const handleAction = (
     request: CreditLimitRequest,
@@ -114,6 +129,12 @@ export default function Credit() {
   };
 
   const handleEdit = (request: CreditLimitRequest) => {
+    if (request.status === "approved") {
+      setEditShopTarget(request);
+      setEditShopCreditLimit(String(request.requested_credit_limit));
+      setIsEditShopDialogOpen(true);
+      return;
+    }
     setEditTarget(request);
     setEditCreditLimit(String(request.requested_credit_limit));
     setEditRemarks(request.remarks || "");
@@ -143,6 +164,49 @@ export default function Credit() {
 
       toast({ title: "Request Updated", description: "Credit limit request has been updated." });
       setIsEditDialogOpen(false);
+    } catch {
+      toast({
+        title: "Something went wrong",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    try {
+      await deleteCreditLimitRequest(deleteTarget.id).unwrap();
+      toast({ title: "Request deleted", description: "Credit limit request has been removed." });
+      setDeleteTarget(null);
+    } catch {
+      toast({ title: "Something went wrong", variant: "destructive" });
+    }
+  };
+
+  const handleEditShopSubmit = async () => {
+    if (!editShopTarget) return;
+    const creditLimit = Number(editShopCreditLimit);
+    if (!creditLimit || creditLimit <= 0) {
+      toast({
+        title: "Invalid Amount",
+        description: "Please enter a valid credit limit.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      await updateShop({
+        shop_id: editShopTarget.shop_id,
+        body: { credit_limit: creditLimit },
+      }).unwrap();
+
+      toast({
+        title: "Shop Updated",
+        description: "Shop credit limit has been updated.",
+      });
+      setIsEditShopDialogOpen(false);
+      setEditShopTarget(null);
     } catch {
       toast({
         title: "Something went wrong",
@@ -255,38 +319,57 @@ export default function Credit() {
       <DataTable
         data={filteredRequests}
         columns={columns}
-        actions={(request) =>
-          (request.status === "pending" || request.status === "approved") && (
+        actions={(request) => {
+          const isPendingOrApproved =
+            request.status === "pending" || request.status === "approved";
+          const isDisapproved = request.status === "disapproved";
+          if (!isPendingOrApproved && !isDisapproved) return null;
+          return (
             <div className="flex gap-2">
-              <Button
-                size="icon"
-                variant="ghost"
-                onClick={() => handleEdit(request)}
-                title="Edit Request"
-              >
-                <Pencil className="w-4 h-4 text-muted-foreground" />
-              </Button>
-              {request.status === "pending" && (
+              {isPendingOrApproved && (
                 <>
                   <Button
                     size="icon"
                     variant="ghost"
-                    onClick={() => handleAction(request, "approve")}
+                    onClick={() => handleEdit(request)}
+                    title="Edit Request"
                   >
-                    <CheckCircle className="w-4 h-4 text-success" />
+                    <Pencil className="w-4 h-4 text-muted-foreground" />
                   </Button>
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    onClick={() => handleAction(request, "disapproved")}
-                  >
-                    <XCircle className="w-4 h-4 text-destructive" />
-                  </Button>
+                  {request.status === "pending" && (
+                    <>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => handleAction(request, "approve")}
+                      >
+                        <CheckCircle className="w-4 h-4 text-success" />
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => handleAction(request, "disapproved")}
+                      >
+                        <XCircle className="w-4 h-4 text-destructive" />
+                      </Button>
+                    </>
+                  )}
                 </>
               )}
+              {isDisapproved && (
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  onClick={() => setDeleteTarget(request)}
+                  title="Delete request"
+                  className="text-destructive hover:text-destructive"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              )}
             </div>
-          )
-        }
+          );
+        }}
       />
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -340,7 +423,32 @@ export default function Credit() {
         </DialogContent>
       </Dialog>
 
-      {/* Edit Credit Limit Request */}
+      {/* Delete credit limit request (disapproved only) */}
+      <Dialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete credit limit request</DialogTitle>
+            <DialogDescription>
+              Remove this request for {deleteTarget?.shop_name}? This cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteTarget(null)}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDelete}
+              disabled={deleting}
+            >
+              {deleting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Credit Limit Request (pending only) */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent>
           <DialogHeader>
@@ -380,6 +488,56 @@ export default function Credit() {
             </Button>
             <Button onClick={handleEditSubmit} disabled={updating}>
               {updating && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              Update
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit shop credit limit (approved only — PUT /shops/{shop_id}) */}
+      <Dialog
+        open={isEditShopDialogOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            setIsEditShopDialogOpen(false);
+            setEditShopTarget(null);
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit shop credit limit</DialogTitle>
+            <DialogDescription>{editShopTarget?.shop_name}</DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-shop-credit-limit">
+                Credit limit <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="edit-shop-credit-limit"
+                type="number"
+                min={0}
+                value={editShopCreditLimit}
+                onChange={(e) => setEditShopCreditLimit(e.target.value)}
+                placeholder="Enter credit limit"
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsEditShopDialogOpen(false);
+                setEditShopTarget(null);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleEditShopSubmit} disabled={updatingShop}>
+              {updatingShop && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
               Update
             </Button>
           </DialogFooter>

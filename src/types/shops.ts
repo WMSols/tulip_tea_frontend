@@ -46,6 +46,21 @@ export interface ReassignShopRequest {
   new_order_booker_id: number;
 }
 
+/** PUT /shops/{shop_id} — update shop (e.g. credit_limit); partial payload supported */
+export interface UpdateShopRequest {
+  name?: string;
+  owner_name?: string;
+  owner_phone?: string;
+  gps_lat?: number;
+  gps_lng?: number;
+  credit_limit?: number;
+  legacy_balance?: number;
+  zone_id?: number;
+  route_id?: number;
+  owner_cnic_front_photo?: string;
+  owner_cnic_back_photo?: string;
+}
+
 export type ShopStatus = "active" | "pending" | "rejected" | "deleted";
 
 export interface UiShop {

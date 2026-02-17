@@ -6,7 +6,7 @@ export interface CreditLimitRequest {
   requested_by_id: number;
   old_credit_limit: number;
   requested_credit_limit: number;
-  status: "pending" | "approved" | "rejected";
+  status: "pending" | "approved" | "disapproved";
   approved_by_distributor: number | null;
   approved_at: string | null;
   remarks: string | null;

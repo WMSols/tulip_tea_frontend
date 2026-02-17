@@ -56,6 +56,14 @@ export const creditLimitApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ["CreditLimitRequests"],
     }),
+
+    deleteCreditLimitRequest: builder.mutation<void, number>({
+      query: (requestId) => ({
+        url: `/credit-limit-requests/${requestId}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: ["CreditLimitRequests"],
+    }),
   }),
 });
 
@@ -64,4 +72,5 @@ export const {
   useUpdateCreditLimitRequestMutation,
   useApproveCreditLimitRequestMutation,
   useRejectCreditLimitRequestMutation,
+  useDeleteCreditLimitRequestMutation,
 } = creditLimitApi;

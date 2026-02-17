@@ -1,5 +1,10 @@
 import { baseApi } from "@/Redux/Api/baseApi";
-import { ApiShop, VerifyShopRequest, ReassignShopRequest } from "@/types/shops";
+import {
+  ApiShop,
+  VerifyShopRequest,
+  ReassignShopRequest,
+  UpdateShopRequest,
+} from "@/types/shops";
 
 export const shopsApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
@@ -40,6 +45,18 @@ export const shopsApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ["Shops"],
     }),
+
+    updateShop: builder.mutation<
+      ApiShop,
+      { shop_id: number; body: UpdateShopRequest }
+    >({
+      query: ({ shop_id, body }) => ({
+        url: `/shops/${shop_id}`,
+        method: "PUT",
+        body,
+      }),
+      invalidatesTags: ["Shops", "CreditLimitRequests"],
+    }),
   }),
 });
 
@@ -49,4 +66,5 @@ export const {
   useVerifyShopMutation,
   useReassignShopMutation,
   useDeleteShopMutation,
+  useUpdateShopMutation,
 } = shopsApi;

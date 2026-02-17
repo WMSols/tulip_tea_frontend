@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState } from "react";
 import {
   BadgePercent,
   Eye,
@@ -24,34 +24,16 @@ import {
 } from "@/components/ui/dialog";
 import { DataTable } from "@/components/dashboard/DataTable";
 import { StatusBadge } from "@/components/dashboard/StatusBadge";
+import { StatCardSkeleton } from "@/components/dashboard/StatCardSkeleton";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
-
-// --- Types ---
-interface OrderItem {
-  product_name: string;
-  quantity: number;
-  unit_price: number;
-  total_price: number;
-}
-
-interface Subsidy {
-  id: string | number;
-  shop_name: string;
-  order_booker_name: string;
-  distributor_id: number;
-  total_amount: number;
-  calculated_total_amount: number;
-  final_total_amount: number;
-  original_amount: number;
-  subsidy_status: "pending_approval" | "approved" | "rejected";
-  subsidy_approved_by: string | null;
-  subsidy_approved_at: string | null;
-  subsidy_rejection_reason: string | null;
-  order_items: OrderItem[];
-  created_at: string;
-}
+import type { PendingSubsidyOrderDto } from "@/types/subsidy";
+import {
+  useGetPendingSubsidyApprovalQuery,
+  useApproveSubsidyMutation,
+  useRejectSubsidyMutation,
+} from "@/Redux/Api/ordersSubsidyApi";
 
 // --- Helpers ---
 function formatCurrency(amount: number) {
@@ -71,126 +53,41 @@ function subsidyStatusBadge(status: string) {
   }
 }
 
-// --- Mock Data ---
-const MOCK_SUBSIDIES: Subsidy[] = [
-  {
-    id: 1001,
-    shop_name: "Al-Rehman Tea House",
-    order_booker_name: "Ahmed Khan",
-    distributor_id: 1,
-    total_amount: 5000,
-    calculated_total_amount: 4500,
-    final_total_amount: 4200,
-    original_amount: 5000,
-    subsidy_status: "pending_approval",
-    subsidy_approved_by: null,
-    subsidy_approved_at: null,
-    subsidy_rejection_reason: null,
-    order_items: [
-      { product_name: "Tulip Green Tea 250g", quantity: 10, unit_price: 250, total_price: 2500 },
-      { product_name: "Tulip Black Tea 500g", quantity: 5, unit_price: 500, total_price: 2500 },
-    ],
-    created_at: "2026-02-09T14:30:00.000000+00:00",
-  },
-  {
-    id: 1002,
-    shop_name: "Karachi Chai Point",
-    order_booker_name: "Bilal Hussain",
-    distributor_id: 1,
-    total_amount: 3200,
-    calculated_total_amount: 3000,
-    final_total_amount: 2800,
-    original_amount: 3200,
-    subsidy_status: "approved",
-    subsidy_approved_by: "faraz",
-    subsidy_approved_at: "2026-02-08T10:00:00.000000+00:00",
-    subsidy_rejection_reason: null,
-    order_items: [
-      { product_name: "Tulip Premium Blend 1kg", quantity: 2, unit_price: 1200, total_price: 2400 },
-      { product_name: "Tulip Green Tea 250g", quantity: 4, unit_price: 200, total_price: 800 },
-    ],
-    created_at: "2026-02-07T09:15:00.000000+00:00",
-  },
-  {
-    id: 1003,
-    shop_name: "Lahore Tea Corner",
-    order_booker_name: "Ob1",
-    distributor_id: 1,
-    total_amount: 7500,
-    calculated_total_amount: 7000,
-    final_total_amount: 6500,
-    original_amount: 7500,
-    subsidy_status: "rejected",
-    subsidy_approved_by: "faraz",
-    subsidy_approved_at: "2026-02-06T16:00:00.000000+00:00",
-    subsidy_rejection_reason: "Subsidy amount exceeds the allowed threshold for this shop category.",
-    order_items: [
-      { product_name: "Tulip Black Tea 500g", quantity: 10, unit_price: 500, total_price: 5000 },
-      { product_name: "Tulip Premium Blend 1kg", quantity: 2, unit_price: 1250, total_price: 2500 },
-    ],
-    created_at: "2026-02-05T11:45:00.000000+00:00",
-  },
-  {
-    id: 1004,
-    shop_name: "Islamabad Brew Stop",
-    order_booker_name: "Farhan Ali",
-    distributor_id: 1,
-    total_amount: 2000,
-    calculated_total_amount: 1800,
-    final_total_amount: 1600,
-    original_amount: 2000,
-    subsidy_status: "pending_approval",
-    subsidy_approved_by: null,
-    subsidy_approved_at: null,
-    subsidy_rejection_reason: null,
-    order_items: [
-      { product_name: "Tulip Green Tea 250g", quantity: 8, unit_price: 250, total_price: 2000 },
-    ],
-    created_at: "2026-02-10T08:00:00.000000+00:00",
-  },
-];
-
 // --- Component ---
 export default function Subsidy() {
   const { toast } = useToast();
-  const [subsidies, setSubsidies] = useState<Subsidy[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: subsidies = [], isLoading } = useGetPendingSubsidyApprovalQuery();
+  const [approveSubsidy, { isLoading: approving }] = useApproveSubsidyMutation();
+  const [rejectSubsidy, { isLoading: rejecting }] = useRejectSubsidyMutation();
 
   // Detail modal
-  const [selectedSubsidy, setSelectedSubsidy] = useState<Subsidy | null>(null);
+  const [selectedSubsidy, setSelectedSubsidy] = useState<PendingSubsidyOrderDto | null>(null);
+
+  // Approve confirmation
+  const [approveTarget, setApproveTarget] = useState<PendingSubsidyOrderDto | null>(null);
+  const [approvingId, setApprovingId] = useState<number | null>(null);
 
   // Reject modal
-  const [rejectTarget, setRejectTarget] = useState<Subsidy | null>(null);
+  const [rejectTarget, setRejectTarget] = useState<PendingSubsidyOrderDto | null>(null);
   const [rejectionReason, setRejectionReason] = useState("");
-  const [rejecting, setRejecting] = useState(false);
 
-  // Approving state
-  const [approvingId, setApprovingId] = useState<string | number | null>(null);
+  const handleConfirmApprove = async () => {
+    if (!approveTarget) return;
+    const order = approveTarget;
+    setApprovingId(order.id);
+    try {
+      await approveSubsidy(order.id).unwrap();
+      setApproveTarget(null);
+      toast({ title: "Subsidy Approved", description: `Order #${order.id} subsidy has been approved.` });
+    } catch {
+      toast({ title: "Error", description: "Failed to approve subsidy.", variant: "destructive" });
+    } finally {
+      setApprovingId(null);
+    }
+  };
 
-  const fetchData = useCallback(() => {
-    setLoading(true);
-    setTimeout(() => {
-      setSubsidies(MOCK_SUBSIDIES);
-      setLoading(false);
-    }, 800);
-  }, []);
-
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
-
-  const handleApprove = async (subsidy: Subsidy) => {
-    setApprovingId(subsidy.id);
-    await new Promise((r) => setTimeout(r, 1000));
-    setSubsidies((prev) =>
-      prev.map((s) =>
-        s.id === subsidy.id
-          ? { ...s, subsidy_status: "approved" as const, subsidy_approved_by: "current_user", subsidy_approved_at: new Date().toISOString() }
-          : s
-      )
-    );
-    setApprovingId(null);
-    toast({ title: "Subsidy Approved", description: `Order #${subsidy.id} subsidy has been approved.` });
+  const handleApproveClick = (order: PendingSubsidyOrderDto) => {
+    setApproveTarget(order);
   };
 
   const handleReject = async () => {
@@ -199,58 +96,56 @@ export default function Subsidy() {
       toast({ title: "Reason Required", description: "Please provide a rejection reason.", variant: "destructive" });
       return;
     }
-    setRejecting(true);
-    await new Promise((r) => setTimeout(r, 1000));
-    setSubsidies((prev) =>
-      prev.map((s) =>
-        s.id === rejectTarget.id
-          ? { ...s, subsidy_status: "rejected" as const, subsidy_approved_by: "current_user", subsidy_approved_at: new Date().toISOString(), subsidy_rejection_reason: rejectionReason }
-          : s
-      )
-    );
-    setRejecting(false);
-    setRejectTarget(null);
-    setRejectionReason("");
-    toast({ title: "Subsidy Rejected", description: `Order #${rejectTarget.id} subsidy has been rejected.` });
+    try {
+      await rejectSubsidy({
+        orderId: rejectTarget.id,
+        body: { subsidy_rejection_reason: rejectionReason },
+      }).unwrap();
+      setRejectTarget(null);
+      setRejectionReason("");
+      toast({ title: "Subsidy Rejected", description: `Order #${rejectTarget.id} subsidy has been rejected.` });
+    } catch {
+      toast({ title: "Error", description: "Failed to reject subsidy.", variant: "destructive" });
+    }
   };
 
   const columns = [
     {
-      key: "id" as keyof Subsidy,
+      key: "id" as keyof PendingSubsidyOrderDto,
       label: "Order ID",
       sortable: true,
-      render: (s: Subsidy) => <span className="font-medium text-foreground">#{s.id}</span>,
+      render: (s: PendingSubsidyOrderDto) => <span className="font-medium text-foreground">#{s.id}</span>,
     },
-    { key: "shop_name" as keyof Subsidy, label: "Shop Name", sortable: true },
-    { key: "order_booker_name" as keyof Subsidy, label: "Order Booker", sortable: true },
+    { key: "shop_name" as keyof PendingSubsidyOrderDto, label: "Shop Name", sortable: true },
+    { key: "order_booker_name" as keyof PendingSubsidyOrderDto, label: "Order Booker", sortable: true },
     {
-      key: "original_amount" as keyof Subsidy,
+      key: "original_amount" as keyof PendingSubsidyOrderDto,
       label: "Original Amount",
-      render: (s: Subsidy) => <span className="font-medium">{formatCurrency(s.original_amount)}</span>,
+      render: (s: PendingSubsidyOrderDto) => <span className="font-medium">{formatCurrency(s.original_amount)}</span>,
     },
     {
-      key: "final_total_amount" as keyof Subsidy,
+      key: "final_total_amount" as keyof PendingSubsidyOrderDto,
       label: "Final Amount",
-      render: (s: Subsidy) => <span className="font-medium">{formatCurrency(s.final_total_amount)}</span>,
+      render: (s: PendingSubsidyOrderDto) => <span className="font-medium">{formatCurrency(s.final_total_amount)}</span>,
     },
     {
       key: "subsidy_diff" as string,
       label: "Subsidy Diff",
-      render: (s: Subsidy) => {
+      render: (s: PendingSubsidyOrderDto) => {
         const diff = s.original_amount - s.final_total_amount;
         return <span className={cn("font-semibold", diff > 0 ? "text-success" : "text-muted-foreground")}>{formatCurrency(diff)}</span>;
       },
     },
     {
-      key: "subsidy_status" as keyof Subsidy,
+      key: "subsidy_status" as keyof PendingSubsidyOrderDto,
       label: "Status",
-      render: (s: Subsidy) => subsidyStatusBadge(s.subsidy_status),
+      render: (s: PendingSubsidyOrderDto) => subsidyStatusBadge(s.subsidy_status),
     },
     {
-      key: "created_at" as keyof Subsidy,
+      key: "created_at" as keyof PendingSubsidyOrderDto,
       label: "Created",
       sortable: true,
-      render: (s: Subsidy) => <span className="text-sm text-muted-foreground">{format(new Date(s.created_at), "MMM d, yyyy")}</span>,
+      render: (s: PendingSubsidyOrderDto) => <span className="text-sm text-muted-foreground">{format(new Date(s.created_at), "MMM d, yyyy")}</span>,
     },
   ];
 
@@ -269,56 +164,93 @@ export default function Subsidy() {
         </div>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="stat-card">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-primary/10">
-              <BadgePercent className="w-5 h-5 text-primary" />
+      {/* Stats — derived from pending subsidy orders */}
+      {isLoading ? (
+        <StatCardSkeleton count={4} columns={4} />
+      ) : (
+        (() => {
+          const totalSubsidyValue = subsidies.reduce(
+            (sum, s) => sum + (s.original_amount - s.final_total_amount),
+            0
+          );
+          const shopsAffected = new Set(subsidies.map((s) => s.shop_id)).size;
+          const avgSubsidyPerOrder =
+            subsidies.length > 0 ? totalSubsidyValue / subsidies.length : 0;
+          return (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="stat-card">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 rounded-xl bg-warning/10">
+                    <BadgePercent className="w-5 h-5 text-warning" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold">{subsidies.length}</p>
+                    <p className="text-sm text-muted-foreground">Pending approval</p>
+                    <p className="text-xs text-muted-foreground/80 mt-0.5">
+                      Orders awaiting your decision
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="stat-card">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 rounded-xl bg-primary/10">
+                    <Coins className="w-5 h-5 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold">
+                      {formatCurrency(totalSubsidyValue)}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      Total subsidy value
+                    </p>
+                    <p className="text-xs text-muted-foreground/80 mt-0.5">
+                      Discount across all pending
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="stat-card">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 rounded-xl bg-muted">
+                    <Store className="w-5 h-5 text-muted-foreground" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold">{shopsAffected}</p>
+                    <p className="text-sm text-muted-foreground">
+                      Shops affected
+                    </p>
+                    <p className="text-xs text-muted-foreground/80 mt-0.5">
+                      Unique shops in pending orders
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="stat-card">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 rounded-xl bg-success/10">
+                    <Coins className="w-5 h-5 text-success" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold">
+                      {formatCurrency(avgSubsidyPerOrder)}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      Avg. subsidy per order
+                    </p>
+                    <p className="text-xs text-muted-foreground/80 mt-0.5">
+                      Per order
+                    </p>
+                  </div>
+                </div>
+              </div>
             </div>
-            <div>
-              <p className="text-2xl font-bold">{subsidies.length}</p>
-              <p className="text-sm text-muted-foreground">Total</p>
-            </div>
-          </div>
-        </div>
-        <div className="stat-card">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-warning/10">
-              <BadgePercent className="w-5 h-5 text-warning" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold">{subsidies.filter((s) => s.subsidy_status === "pending_approval").length}</p>
-              <p className="text-sm text-muted-foreground">Pending</p>
-            </div>
-          </div>
-        </div>
-        <div className="stat-card">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-success/10">
-              <Check className="w-5 h-5 text-success" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold">{subsidies.filter((s) => s.subsidy_status === "approved").length}</p>
-              <p className="text-sm text-muted-foreground">Approved</p>
-            </div>
-          </div>
-        </div>
-        <div className="stat-card">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-destructive/10">
-              <X className="w-5 h-5 text-destructive" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold">{subsidies.filter((s) => s.subsidy_status === "rejected").length}</p>
-              <p className="text-sm text-muted-foreground">Rejected</p>
-            </div>
-          </div>
-        </div>
-      </div>
+          );
+        })()
+      )}
 
       {/* Table */}
-      {loading ? (
+      {isLoading ? (
         <div className="space-y-3">
           {[1, 2, 3, 4].map((i) => (
             <Skeleton key={i} className="h-16 w-full rounded-xl" />
@@ -342,11 +274,16 @@ export default function Subsidy() {
                 <>
                   <Button
                     size="sm"
-                    disabled={approvingId === s.id}
-                    onClick={() => handleApprove(s)}
+                    disabled={approvingId === s.id || approving}
+                    onClick={() => handleApproveClick(s)}
                     className="gap-1 bg-primary text-primary-foreground hover:bg-primary/90 h-8 px-2.5 text-xs"
                   >
-                    {approvingId === s.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+                    {approvingId === s.id ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin"
+                    />
+                    ) : (
+                      <Check className="w-3.5 h-3.5" />
+                    )}
                     Approve
                   </Button>
                   <Button
@@ -425,8 +362,8 @@ export default function Subsidy() {
                       </tr>
                     </thead>
                     <tbody>
-                      {selectedSubsidy.order_items.map((item, i) => (
-                        <tr key={i}>
+                      {selectedSubsidy.order_items.map((item) => (
+                        <tr key={item.id}>
                           <td className="font-medium">{item.product_name}</td>
                           <td>{item.quantity}</td>
                           <td>{formatCurrency(item.unit_price)}</td>
@@ -469,18 +406,44 @@ export default function Subsidy() {
         </DialogContent>
       </Dialog>
 
+      {/* ===== Approve Confirmation Modal ===== */}
+      <Dialog open={!!approveTarget} onOpenChange={() => setApproveTarget(null)}>
+        <DialogContent className="bg-card border-border rounded-xl sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-semibold">Approve subsidy</DialogTitle>
+            <DialogDescription>
+              Approve subsidy for order #{approveTarget?.id} — {approveTarget?.shop_name}. Final amount: {approveTarget && formatCurrency(approveTarget.final_total_amount)}.
+            </DialogDescription>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground py-2">This action cannot be undone. Do you want to continue?</p>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setApproveTarget(null)} className="rounded-lg">
+              Cancel
+            </Button>
+            <Button
+              onClick={handleConfirmApprove}
+              disabled={approving}
+              className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg gap-2"
+            >
+              {approving && <Loader2 className="w-4 h-4 animate-spin" />}
+              Approve
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* ===== Reject Confirmation Modal ===== */}
       <Dialog open={!!rejectTarget} onOpenChange={() => { setRejectTarget(null); setRejectionReason(""); }}>
         <DialogContent className="bg-card border-border rounded-xl sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-lg font-semibold">Reject Subsidy</DialogTitle>
+            <DialogTitle className="text-lg font-semibold">Reject subsidy</DialogTitle>
             <DialogDescription>
-              Reject subsidy for order #{rejectTarget?.id} — {rejectTarget?.shop_name}
+              Reject subsidy for order #{rejectTarget?.id} — {rejectTarget?.shop_name}. This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div className="space-y-2">
-              <Label htmlFor="rejection-reason">Rejection Reason <span className="text-destructive">*</span></Label>
+              <Label htmlFor="rejection-reason">Rejection reason <span className="text-destructive">*</span></Label>
               <Textarea
                 id="rejection-reason"
                 placeholder="Provide a reason for rejection..."

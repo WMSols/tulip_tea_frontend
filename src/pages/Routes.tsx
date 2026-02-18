@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import {
   Plus,
   Edit2,
@@ -44,11 +44,12 @@ import {
 } from "@/Redux/Api/routesApi";
 import { useGetZonesQuery } from "@/Redux/Api/zonesApi";
 import { useGetOrderBookersByDistributorQuery } from "@/Redux/Api/orderBookerApi";
+import { useGetDeliveryMenByDistributorQuery } from "@/Redux/Api/deliveryManApi";
 import type { Route } from "@/types/routes";
 import { useAppSelector } from "@/Redux/Hooks/hooks";
 import type { CreateRouteRequest, UpdateRouteRequest } from "@/types/routes";
 import { Zone } from "@/types/zones";
-import { OrderBooker } from "@/types/staff";
+import { OrderBooker, DeliveryMan } from "@/types/staff";
 import {
   routeSchema,
   validateForm,
@@ -60,6 +61,12 @@ import type {
   CreateWeeklyRoutePayload,
   UpdateWeeklyRoutePayload,
 } from "@/types/weeklyRoutes";
+import {
+  useGetWeeklyRouteSchedulesQuery,
+  useCreateWeeklyRouteScheduleMutation,
+  useUpdateWeeklyRouteScheduleMutation,
+  useGenerateVisitTasksMutation,
+} from "@/Redux/Api/weeklyRoutesApi";
 
 // --- Route form types ---
 interface RouteFormData {
@@ -67,15 +74,6 @@ interface RouteFormData {
   zone_id: string;
   order_booker_id: string;
 }
-
-// --- Weekly routes mock data (replace with real API later) ---
-const MOCK_SCHEDULES: WeeklyRouteSchedule[] = [
-  { id: 1, assignee_type: "order_booker", assignee_id: 1, assignee_name: "Ali Hassan", route_id: 1, route_name: "North Route 1", day_of_week: 1, is_active: true, created_by_distributor: 1, created_at: "2026-01-20T10:00:00.000000+00:00" },
-  { id: 2, assignee_type: "order_booker", assignee_id: 2, assignee_name: "Ahmed Khan", route_id: 2, route_name: "North Route 2", day_of_week: 2, is_active: true, created_by_distributor: 1, created_at: "2026-01-22T10:00:00.000000+00:00" },
-  { id: 3, assignee_type: "delivery_man", assignee_id: 3, assignee_name: "Imran Ali", route_id: 3, route_name: "South Route 1", day_of_week: 3, is_active: true, created_by_distributor: 1, created_at: "2026-02-01T10:00:00.000000+00:00" },
-  { id: 4, assignee_type: "order_booker", assignee_id: 4, assignee_name: "Usman Malik", route_id: 4, route_name: "Central Route 1", day_of_week: 4, is_active: false, created_by_distributor: 1, created_at: "2026-02-05T10:00:00.000000+00:00" },
-  { id: 5, assignee_type: "delivery_man", assignee_id: 5, assignee_name: "Farhan Ahmed", route_id: 5, route_name: "East Route 1", day_of_week: 5, is_active: true, created_by_distributor: 1, created_at: "2026-02-10T10:00:00.000000+00:00" },
-];
 
 const WEEKLY_DAYS = [0, 1, 2, 3, 4, 5, 6];
 
@@ -95,21 +93,28 @@ export default function Routes() {
   // ============================================================
   //  ROUTES — existing API logic (unchanged)
   // ============================================================
-  const { data: zones = [], isLoading: isLoadingZones } = useGetZonesQuery();
+  const { data: zones = [], isLoading: isLoadingZones, isFetching: isFetchingZones } = useGetZonesQuery();
 
-  const { data: orderBookers = [], isLoading: isLoadingOB } =
+  const { data: orderBookers = [], isLoading: isLoadingOB, isFetching: isFetchingOB } =
     useGetOrderBookersByDistributorQuery({
       distributor_id: distributorId,
     });
+  const { data: deliveryMen = [] } = useGetDeliveryMenByDistributorQuery({
+    distributor_id: distributorId,
+  });
 
   const [zoneId, setZoneId] = useState<number | undefined>();
-  const { data: routes = [], isLoading } = useGetRoutesQuery(
+  const { data: routes = [], isLoading, isFetching } = useGetRoutesQuery(
     zoneId
       ? { filterType: "zone", filterId: zoneId }
       : { filterType: "distributor", filterId: distributorId },
   );
+  const { data: distributorRoutes = [], isFetching: isFetchingDistributorRoutes } = useGetRoutesQuery({
+    filterType: "distributor",
+    filterId: distributorId,
+  });
 
-  const isPageLoading = isLoadingZones || isLoadingOB || isLoading;
+  const isPageLoading = isLoadingZones || isLoadingOB || isLoading || isFetchingZones || isFetchingOB || isFetching;
 
   const [createRoute, { isLoading: isCreating }] = useCreateRouteMutation();
   const [updateRoute, { isLoading: isUpdating }] = useUpdateRouteMutation();
@@ -236,52 +241,16 @@ export default function Routes() {
   ];
 
   // ============================================================
-  //  WEEKLY ROUTES — mock data logic
+  //  WEEKLY ROUTES — API
   // ============================================================
-  const [schedules, setSchedules] = useState<WeeklyRouteSchedule[]>([]);
-  const [weeklyLoading, setWeeklyLoading] = useState(true);
-
-  const fetchSchedules = useCallback(() => {
-    setWeeklyLoading(true);
-    setTimeout(() => {
-      setSchedules(MOCK_SCHEDULES);
-      setWeeklyLoading(false);
-    }, 800);
-  }, []);
-
-  useEffect(() => {
-    fetchSchedules();
-  }, [fetchSchedules]);
-
-  const createSchedule = async (payload: CreateWeeklyRoutePayload) => {
-    await new Promise((r) => setTimeout(r, 1000));
-    const newSchedule: WeeklyRouteSchedule = {
-      id: Math.max(0, ...schedules.map((s) => s.id)) + 1,
-      assignee_type: payload.assignee_type,
-      assignee_id: payload.assignee_id,
-      assignee_name: `Staff ${payload.assignee_id}`,
-      route_id: payload.route_id,
-      route_name: `Route ${payload.route_id}`,
-      day_of_week: payload.day_of_week,
-      is_active: true,
-      created_by_distributor: 1,
-      created_at: new Date().toISOString(),
-    };
-    setSchedules((prev) => [...prev, newSchedule]);
-    toast({ title: "Schedule Created", description: "Weekly route schedule has been created successfully." });
-  };
-
-  const updateSchedule = async (scheduleId: number, payload: UpdateWeeklyRoutePayload) => {
-    await new Promise((r) => setTimeout(r, 1000));
-    setSchedules((prev) =>
-      prev.map((s) =>
-        s.id === scheduleId
-          ? { ...s, route_id: payload.route_id, day_of_week: payload.day_of_week, is_active: payload.is_active }
-          : s,
-      ),
-    );
-    toast({ title: "Schedule Updated", description: "Weekly route schedule has been updated successfully." });
-  };
+  const { data: schedules = [], isLoading: weeklyLoading, isFetching: weeklyFetching } =
+    useGetWeeklyRouteSchedulesQuery(distributorId);
+  const [createWeeklySchedule, { isLoading: isCreatingWeekly }] =
+    useCreateWeeklyRouteScheduleMutation();
+  const [updateWeeklySchedule, { isLoading: isUpdatingWeekly }] =
+    useUpdateWeeklyRouteScheduleMutation();
+  const [generateVisitTasks, { isLoading: isGeneratingTasks }] =
+    useGenerateVisitTasksMutation();
 
   // Weekly routes UI state
   const [viewSchedule, setViewSchedule] = useState<WeeklyRouteSchedule | null>(null);
@@ -294,7 +263,11 @@ export default function Routes() {
   const [wfRouteId, setWfRouteId] = useState("");
   const [wfDayOfWeek, setWfDayOfWeek] = useState("1");
   const [wfIsActive, setWfIsActive] = useState(true);
-  const [wfSubmitting, setWfSubmitting] = useState(false);
+
+  // Generate visit tasks dialog
+  const [isGenerateTasksOpen, setIsGenerateTasksOpen] = useState(false);
+  const [generateWeeksAhead, setGenerateWeeksAhead] = useState(4);
+  const [generateAssigneeType, setGenerateAssigneeType] = useState("order_booker");
 
   const isWeeklyEdit = !!editSchedule;
 
@@ -330,31 +303,60 @@ export default function Routes() {
   };
 
   const handleWeeklyFormSubmit = async () => {
-    setWfSubmitting(true);
     try {
       if (isWeeklyEdit && editSchedule) {
-        await updateSchedule(editSchedule.id, {
-          route_id: parseInt(wfRouteId),
-          day_of_week: parseInt(wfDayOfWeek),
-          is_active: wfIsActive,
-        });
+        await updateWeeklySchedule({
+          scheduleId: editSchedule.id,
+          body: {
+            route_id: parseInt(wfRouteId, 10),
+            day_of_week: parseInt(wfDayOfWeek, 10),
+            is_active: wfIsActive,
+          },
+        }).unwrap();
+        toast({ title: "Schedule Updated", description: "Weekly route schedule has been updated successfully." });
       } else {
-        await createSchedule({
-          assignee_type: wfAssigneeType,
-          assignee_id: parseInt(wfAssigneeId),
-          route_id: parseInt(wfRouteId),
-          day_of_week: parseInt(wfDayOfWeek),
-        });
+        await createWeeklySchedule({
+          distributorId,
+          body: {
+            assignee_type: wfAssigneeType,
+            assignee_id: parseInt(wfAssigneeId, 10),
+            route_id: parseInt(wfRouteId, 10),
+            day_of_week: parseInt(wfDayOfWeek, 10),
+          },
+        }).unwrap();
+        toast({ title: "Schedule Created", description: "Weekly route schedule has been created successfully." });
       }
       closeWeeklyForm();
-    } finally {
-      setWfSubmitting(false);
+    } catch(error: any) {
+      toast({
+        title: "Error",
+        description: error?.data?.detail || "Operation failed",
+        variant: "destructive",
+      });
     }
   };
+
+  const wfSubmitting = isCreatingWeekly || isUpdatingWeekly;
 
   const isWeeklyFormValid = isWeeklyEdit
     ? wfRouteId && wfDayOfWeek
     : wfAssigneeType && wfAssigneeId && wfRouteId && wfDayOfWeek;
+
+  const handleGenerateVisitTasks = async () => {
+    try {
+      const res = await generateVisitTasks({
+        weeks_ahead: generateWeeksAhead,
+        assignee_type: generateAssigneeType,
+      }).unwrap();
+      toast({
+        title: "Visit tasks generated",
+        description: res.message || `Generated ${res.tasks_generated} tasks, skipped ${res.tasks_skipped} duplicates.`,
+      });
+      setIsGenerateTasksOpen(false);
+    } catch {
+      toast({ title: "Something went wrong", variant: "destructive" });
+    }
+  };
 
   const weeklyColumns = [
     { key: "id" as const, label: "ID", sortable: true },
@@ -509,7 +511,7 @@ export default function Routes() {
 
         {/* ===== Weekly Routes Tab ===== */}
         <TabsContent value="weekly" className="mt-6">
-          {weeklyLoading ? (
+          {(weeklyLoading || weeklyFetching) ? (
             <div className="space-y-4">
               <div className="flex justify-between">
                 <Skeleton className="h-8 w-48" />
@@ -532,9 +534,14 @@ export default function Routes() {
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Button variant="outline" className="gap-2">
+                  
+                  <Button
+                    variant="outline"
+                    className="gap-2"
+                    onClick={() => setIsGenerateTasksOpen(true)}
+                  >
                     <CalendarDays className="w-4 h-4" />
-                    Schedule Next 4 Weeks
+                    Generate Visit Tasks
                   </Button>
                   <Button className="gap-2" onClick={openWeeklyCreate}>
                     <Plus className="w-4 h-4" />
@@ -816,7 +823,13 @@ export default function Routes() {
               <>
                 <div className="space-y-2">
                   <Label>Assignee Type</Label>
-                  <Select value={wfAssigneeType} onValueChange={setWfAssigneeType}>
+                  <Select
+                    value={wfAssigneeType}
+                    onValueChange={(v) => {
+                      setWfAssigneeType(v);
+                      setWfAssigneeId("");
+                    }}
+                  >
                     <SelectTrigger className="bg-background border-border">
                       <SelectValue />
                     </SelectTrigger>
@@ -827,28 +840,55 @@ export default function Routes() {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label>Assignee ID</Label>
-                  <Input
-                    type="number"
-                    min={1}
-                    placeholder="Enter assignee ID"
+                  <Label>
+                    {wfAssigneeType === "order_booker"
+                      ? "Order Booker"
+                      : "Delivery Man"}
+                  </Label>
+                  <Select
                     value={wfAssigneeId}
-                    onChange={(e) => setWfAssigneeId(e.target.value)}
-                    className="bg-background border-border"
-                  />
+                    onValueChange={setWfAssigneeId}
+                  >
+                    <SelectTrigger className="bg-background border-border">
+                      <SelectValue
+                        placeholder={
+                          wfAssigneeType === "order_booker"
+                            ? "Select order booker"
+                            : "Select delivery man"
+                        }
+                      />
+                    </SelectTrigger>
+                    <SelectContent className="bg-card border-border">
+                      {wfAssigneeType === "order_booker"
+                        ? orderBookers.map((ob: OrderBooker) => (
+                            <SelectItem key={ob.id} value={String(ob.id)}>
+                              {ob.name}
+                            </SelectItem>
+                          ))
+                        : deliveryMen.map((dm: DeliveryMan) => (
+                            <SelectItem key={dm.id} value={String(dm.id)}>
+                              {dm.name}
+                            </SelectItem>
+                          ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </>
             )}
             <div className="space-y-2">
-              <Label>Route ID</Label>
-              <Input
-                type="number"
-                min={1}
-                placeholder="Enter route ID"
-                value={wfRouteId}
-                onChange={(e) => setWfRouteId(e.target.value)}
-                className="bg-background border-border"
-              />
+              <Label>Route</Label>
+              <Select value={wfRouteId} onValueChange={setWfRouteId}>
+                <SelectTrigger className="bg-background border-border">
+                  <SelectValue placeholder="Select route" />
+                </SelectTrigger>
+                <SelectContent className="bg-card border-border">
+                  {distributorRoutes.map((r: Route) => (
+                    <SelectItem key={r.id} value={String(r.id)}>
+                      {r.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-2">
               <Label>Day of Week</Label>
@@ -883,6 +923,64 @@ export default function Routes() {
             >
               {wfSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
               {isWeeklyEdit ? "Update Schedule" : "Create Schedule"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ===== Generate Visit Tasks Modal ===== */}
+      <Dialog open={isGenerateTasksOpen} onOpenChange={setIsGenerateTasksOpen}>
+        <DialogContent className="bg-card border-border max-w-md">
+          <DialogHeader>
+            <DialogTitle>Generate visit tasks</DialogTitle>
+            <DialogDescription>
+              Generate visit tasks for the coming weeks based on weekly route schedules.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Weeks ahead</Label>
+              <Input
+                type="number"
+                min={1}
+                max={52}
+                value={generateWeeksAhead}
+                onChange={(e) =>
+                  setGenerateWeeksAhead(parseInt(e.target.value, 10) || 4)
+                }
+                className="bg-background border-border"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Assignee type</Label>
+              <Select
+                value={generateAssigneeType}
+                onValueChange={setGenerateAssigneeType}
+              >
+                <SelectTrigger className="bg-background border-border">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-card border-border">
+                  <SelectItem value="order_booker">Order Booker</SelectItem>
+                  <SelectItem value="delivery_man">Delivery Man</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsGenerateTasksOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleGenerateVisitTasks}
+              disabled={isGeneratingTasks}
+              className="gap-2"
+            >
+              {isGeneratingTasks && <Loader2 className="w-4 h-4 animate-spin" />}
+              Generate
             </Button>
           </DialogFooter>
         </DialogContent>

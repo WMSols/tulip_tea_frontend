@@ -1,4 +1,4 @@
-import { Store, Phone, MapPin, CreditCard, Image, UserCheck, Wallet } from "lucide-react";
+import { Store, Phone, MapPin, CreditCard, Image, UserCheck, Wallet, Building2, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/dashboard/StatusBadge";
 import {
@@ -36,13 +36,13 @@ export function ViewDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="bg-card border-border max-w-lg">
+      <DialogContent className="bg-card border-border max-w-lg max-h-[90vh] flex flex-col overflow-hidden">
         <DialogHeader>
           <DialogTitle>Shop Details</DialogTitle>
           <DialogDescription>View complete shop information</DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 py-4">
+        <div className="space-y-4 py-4 overflow-y-auto max-h-[65vh] pr-1">
           <div className="flex items-start gap-4">
             <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
               <Store className="w-6 h-6 text-primary" />
@@ -140,7 +140,7 @@ export function ViewDialog({
           </div>
 
           {shop.status === "pending" && (
-            <div className="space-y-3 pt-4 border-t">
+            <div className="space-y-4 pt-4 border-t">
               <p className="text-sm text-muted-foreground flex items-center gap-1">
                 <Image className="w-3 h-3" /> CNIC Verification
               </p>
@@ -177,6 +177,44 @@ export function ViewDialog({
                     </div>
                   )}
                 </div>
+              </div>
+
+              <p className="text-sm text-muted-foreground flex items-center gap-1 pt-2">
+                <Building2 className="w-3 h-3" /> Shop Exterior
+              </p>
+              <div className="space-y-1.5">
+                {shop.shopExteriorPhoto ? (
+                  <a href={shop.shopExteriorPhoto} target="_blank" rel="noopener noreferrer">
+                    <img
+                      src={shop.shopExteriorPhoto}
+                      alt="Shop Exterior"
+                      className="aspect-video w-full object-cover rounded-lg border border-border hover:opacity-90 transition-opacity cursor-pointer"
+                    />
+                  </a>
+                ) : (
+                  <div className="aspect-video bg-muted rounded-lg flex items-center justify-center">
+                    <p className="text-xs text-muted-foreground">Not provided</p>
+                  </div>
+                )}
+              </div>
+
+              <p className="text-sm text-muted-foreground flex items-center gap-1 pt-2">
+                <User className="w-3 h-3" /> Owner Photo
+              </p>
+              <div className="space-y-1.5">
+                {shop.ownerPhoto ? (
+                  <a href={shop.ownerPhoto} target="_blank" rel="noopener noreferrer">
+                    <img
+                      src={shop.ownerPhoto}
+                      alt="Owner"
+                      className="aspect-video w-full object-cover rounded-lg border border-border hover:opacity-90 transition-opacity cursor-pointer"
+                    />
+                  </a>
+                ) : (
+                  <div className="aspect-video bg-muted rounded-lg flex items-center justify-center">
+                    <p className="text-xs text-muted-foreground">Not provided</p>
+                  </div>
+                )}
               </div>
             </div>
           )}

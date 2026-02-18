@@ -28,13 +28,13 @@ interface UseWalletDataReturn {
 export const useWalletData = (): UseWalletDataReturn => {
   const distributorId = useAppSelector((s) => s.auth.user!.id);
 
-  const { data: balance, isLoading: isLoadingBalance } =
+  const { data: balance, isLoading: isLoadingBalance, isFetching: isFetchingBalance } =
     useGetDistributorBalanceQuery(distributorId);
 
-  const { data: wallets = [], isLoading: isLoadingWallets } =
+  const { data: wallets = [], isLoading: isLoadingWallets, isFetching: isFetchingWallets } =
     useGetAllWalletsQuery(distributorId);
 
-  const { data: transactions = [], isLoading: isLoadingTransactions } =
+  const { data: transactions = [], isLoading: isLoadingTransactions, isFetching: isFetchingTransactions } =
     useGetWalletTransactionsQuery(
       { distributorId, limit: TX_QUERY_LIMIT },
     );
@@ -50,9 +50,9 @@ export const useWalletData = (): UseWalletDataReturn => {
     transactions,
     stats,
     loading: {
-      balance: isLoadingBalance,
-      wallets: isLoadingWallets,
-      transactions: isLoadingTransactions,
+      balance: isLoadingBalance || isFetchingBalance,
+      wallets: isLoadingWallets || isFetchingWallets,
+      transactions: isLoadingTransactions || isFetchingTransactions,
     },
     distributorId,
   };

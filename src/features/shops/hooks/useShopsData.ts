@@ -10,8 +10,8 @@ import type { UiShop } from "../types";
  */
 export function useShopsData() {
   const distributorId = useAppSelector((s) => s.auth.user!.id);
-  const { data: allShops = [], isLoading } = useGetAllShopsQuery(distributorId);
-  const { data: zones = [], isLoading: isLoadingZones } = useGetZonesQuery();
+  const { data: allShops = [], isLoading, isFetching } = useGetAllShopsQuery(distributorId);
+  const { data: zones = [], isLoading: isLoadingZones, isFetching: isFetchingZones } = useGetZonesQuery();
 
   const zoneMap = useMemo(() => {
     const map: Record<number, string> = {};
@@ -41,6 +41,6 @@ export function useShopsData() {
     zones,
     zoneMap,
     stats,
-    isLoading: isLoading || isLoadingZones,
+    isLoading: isLoading || isLoadingZones || isFetching || isFetchingZones,
   };
 }

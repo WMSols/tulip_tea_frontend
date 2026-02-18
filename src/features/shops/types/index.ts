@@ -25,6 +25,8 @@ export interface UiShop {
   assignedOrderBookerName: string | null;
   cnicFrontPhoto: string | null;
   cnicBackPhoto: string | null;
+  shopExteriorPhoto: string | null;
+  ownerPhoto: string | null;
 }
 
 export interface OrderBooker {

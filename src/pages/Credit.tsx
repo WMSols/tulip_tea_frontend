@@ -40,7 +40,7 @@ export default function Credit() {
   const distributorId = useAppSelector((s) => s.auth.user.id);
   const { toast } = useToast();
 
-  const { data = [], isLoading } = useGetAllCreditLimitRequestsQuery(distributorId);
+  const { data = [], isLoading, isFetching } = useGetAllCreditLimitRequestsQuery(distributorId);
 
   const [approveRequest, { isLoading: approving }] =
     useApproveCreditLimitRequestMutation();
@@ -289,7 +289,7 @@ export default function Credit() {
     },
   ];
 
-  if (isLoading) {
+  if (isLoading || isFetching) {
     return (
       <PageSkeleton
         statCards={0}

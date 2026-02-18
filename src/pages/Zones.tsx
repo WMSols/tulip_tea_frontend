@@ -26,7 +26,7 @@ import { Zone } from "@/types/zones";
 import { zoneSchema, validateForm, type FormErrors } from "@/lib/validations";
 
 export default function Zones() {
-  const { data: zones = [], isLoading: isLoadingZones } = useGetZonesQuery();
+  const { data: zones = [], isLoading: isLoadingZones, isFetching: isFetchingZones } = useGetZonesQuery();
   const [createZone, { isLoading: isCreating }] = useCreateZoneMutation();
   const [deleteZone, { isLoading: isDeleting }] = useDeleteZoneMutation();
   const [updateZone, { isLoading: isUpdating }] = useUpdateZoneMutation();
@@ -138,7 +138,7 @@ export default function Zones() {
     },
   ];
 
-  if (isLoadingZones) {
+  if (isLoadingZones || isFetchingZones) {
     return (
       <PageSkeleton
         statCards={0}

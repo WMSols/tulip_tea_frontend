@@ -25,7 +25,7 @@ export const useProductsData = (
   const { view = "all" } = options;
 
   const includeInactive = view !== "active";
-  const { data: rawProducts = [], isLoading } = useGetProductsQuery({
+  const { data: rawProducts = [], isLoading, isFetching } = useGetProductsQuery({
     include_inactive: includeInactive,
   });
 
@@ -41,6 +41,6 @@ export const useProductsData = (
   return {
     products,
     stats,
-    isLoading,
+    isLoading: isLoading || isFetching,
   };
 };

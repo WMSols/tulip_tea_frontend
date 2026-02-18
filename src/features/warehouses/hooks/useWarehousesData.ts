@@ -28,9 +28,9 @@ interface UseWarehousesDataReturn {
 export const useWarehousesData = (
   distributorId: number | null,
 ): UseWarehousesDataReturn => {
-  const { data: warehouses = [], isLoading: isWarehousesLoading } =
+  const { data: warehouses = [], isLoading: isWarehousesLoading, isFetching: isFetchingWarehouses } =
     useGetWarehousesQuery();
-  const { data: zones = [], isLoading: isLoadingZones } = useGetZonesQuery();
+  const { data: zones = [], isLoading: isLoadingZones, isFetching: isFetchingZones } = useGetZonesQuery();
   const { data: products = [] } = useGetProductsQuery();
 
   const { data: deliveryMen = [] } = useGetDeliveryMenByDistributorQuery(
@@ -49,7 +49,7 @@ export const useWarehousesData = (
     products,
     deliveryMen,
     stats,
-    isLoading: isWarehousesLoading,
-    isLoadingZones,
+    isLoading: isWarehousesLoading || isFetchingWarehouses,
+    isLoadingZones: isLoadingZones || isFetchingZones,
   };
 };

@@ -92,19 +92,19 @@ export default function Staff() {
 
   /* ------------------- API ------------------- */
 
-  const { data: zones = [], isLoading: isLoadingZones } = useGetZonesQuery();
+  const { data: zones = [], isLoading: isLoadingZones, isFetching: isFetchingZones } = useGetZonesQuery();
 
-  const { data: orderBookers = [], isLoading: isLoadingOB } =
+  const { data: orderBookers = [], isLoading: isLoadingOB, isFetching: isFetchingOB } =
     useGetOrderBookersByDistributorQuery({
       distributor_id: distributorId,
     });
 
-  const { data: deliveryMen = [], isLoading: isLoadingDM } =
+  const { data: deliveryMen = [], isLoading: isLoadingDM, isFetching: isFetchingDM } =
     useGetDeliveryMenByDistributorQuery({
       distributor_id: distributorId,
     });
 
-  const isPageLoading = isLoadingZones || isLoadingOB || isLoadingDM;
+  const isPageLoading = isLoadingZones || isLoadingOB || isLoadingDM || isFetchingZones || isFetchingOB || isFetchingDM;
 
   /* ------------------- API HOOKS WITH LOADING STATES ------------------- */
   const [createOrderBooker, { isLoading: isCreatingOB }] =

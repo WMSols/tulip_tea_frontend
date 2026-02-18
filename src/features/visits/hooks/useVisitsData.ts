@@ -15,12 +15,14 @@ export function useVisitsData() {
   const {
     data: shopVisits = [],
     isLoading: isLoadingShopVisits,
+    isFetching: isFetchingShopVisits,
     isError: isShopVisitsError,
   } = useGetShopVisitsAllQuery({ limit: VISITS_QUERY_LIMIT });
 
   const {
     data: deliveries = [],
     isLoading: isLoadingDeliveries,
+    isFetching: isFetchingDeliveries,
     isError: isDeliveriesError,
   } = useGetDeliveriesByDistributorQuery({
     distributorId: DEFAULT_DISTRIBUTOR_ID,
@@ -100,7 +102,7 @@ export function useVisitsData() {
     return all;
   }, [shopVisits, deliveries]);
 
-  const isLoading = isLoadingShopVisits || isLoadingDeliveries;
+  const isLoading = isLoadingShopVisits || isLoadingDeliveries || isFetchingShopVisits || isFetchingDeliveries;
   const isError = isShopVisitsError || isDeliveriesError;
 
   return { rows, isLoading, isError };

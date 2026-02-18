@@ -56,7 +56,7 @@ function subsidyStatusBadge(status: string) {
 // --- Component ---
 export default function Subsidy() {
   const { toast } = useToast();
-  const { data: subsidies = [], isLoading } = useGetPendingSubsidyApprovalQuery();
+  const { data: subsidies = [], isLoading, isFetching } = useGetPendingSubsidyApprovalQuery();
   const [approveSubsidy, { isLoading: approving }] = useApproveSubsidyMutation();
   const [rejectSubsidy, { isLoading: rejecting }] = useRejectSubsidyMutation();
 
@@ -165,7 +165,7 @@ export default function Subsidy() {
       </div>
 
       {/* Stats — derived from pending subsidy orders */}
-      {isLoading ? (
+      {(isLoading || isFetching) ? (
         <StatCardSkeleton count={4} columns={4} />
       ) : (
         (() => {
@@ -250,7 +250,7 @@ export default function Subsidy() {
       )}
 
       {/* Table */}
-      {isLoading ? (
+      {(isLoading || isFetching) ? (
         <div className="space-y-3">
           {[1, 2, 3, 4].map((i) => (
             <Skeleton key={i} className="h-16 w-full rounded-xl" />

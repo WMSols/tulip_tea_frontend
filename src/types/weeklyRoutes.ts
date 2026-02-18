@@ -24,6 +24,19 @@ export interface UpdateWeeklyRoutePayload {
   is_active: boolean;
 }
 
+/** POST /visit-tasks/generate — request body */
+export interface GenerateVisitTasksPayload {
+  weeks_ahead: number;
+  assignee_type: string;
+}
+
+/** POST /visit-tasks/generate — response */
+export interface GenerateVisitTasksResponse {
+  message: string;
+  tasks_generated: number;
+  tasks_skipped: number;
+}
+
 const DAYS_OF_WEEK = [
   "Sunday",
   "Monday",

@@ -3,6 +3,8 @@ import {
   WeeklyRouteSchedule,
   CreateWeeklyRoutePayload,
   UpdateWeeklyRoutePayload,
+  GenerateVisitTasksPayload,
+  GenerateVisitTasksResponse,
 } from "@/types/weeklyRoutes";
 
 export const weeklyRoutesApi = baseApi.injectEndpoints({
@@ -51,6 +53,18 @@ export const weeklyRoutesApi = baseApi.injectEndpoints({
         { type: "WeeklyRouteSchedules", id: "LIST" },
       ],
     }),
+
+    // POST /visit-tasks/generate
+    generateVisitTasks: builder.mutation<
+      GenerateVisitTasksResponse,
+      GenerateVisitTasksPayload
+    >({
+      query: (body) => ({
+        url: "/visit-tasks/generate",
+        method: "POST",
+        body,
+      }),
+    }),
   }),
 });
 
@@ -58,4 +72,5 @@ export const {
   useGetWeeklyRouteSchedulesQuery,
   useCreateWeeklyRouteScheduleMutation,
   useUpdateWeeklyRouteScheduleMutation,
+  useGenerateVisitTasksMutation,
 } = weeklyRoutesApi;

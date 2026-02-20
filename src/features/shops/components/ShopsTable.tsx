@@ -65,7 +65,7 @@ export function ShopsTable({
     },
     {
       key: "balance",
-      label: "Balance",
+      label: "Outstanding Balance",
       render: (shop: UiShop) => (
         <span
           className={

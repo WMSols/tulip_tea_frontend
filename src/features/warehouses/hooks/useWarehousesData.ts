@@ -49,7 +49,8 @@ export const useWarehousesData = (
     products,
     deliveryMen,
     stats,
-    isLoading: isWarehousesLoading || isFetchingWarehouses,
-    isLoadingZones: isLoadingZones || isFetchingZones,
+    /** Initial load only (no isFetching) so refetches don't show skeleton */
+    isLoading: isWarehousesLoading,
+    isLoadingZones,
   };
 };

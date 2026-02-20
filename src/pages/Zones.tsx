@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
+import { useAppSelector } from "@/Redux/Hooks/hooks";
 import {
   useGetZonesQuery,
   useCreateZoneMutation,
@@ -26,7 +27,8 @@ import { Zone } from "@/types/zones";
 import { zoneSchema, validateForm, type FormErrors } from "@/lib/validations";
 
 export default function Zones() {
-  const { data: zones = [], isLoading: isLoadingZones, isFetching: isFetchingZones } = useGetZonesQuery();
+  const { data: zones = [], isLoading: isLoadingZones } = useGetZonesQuery();
+  const headerRefreshing = useAppSelector((s) => s.ui.headerRefreshing);
   const [createZone, { isLoading: isCreating }] = useCreateZoneMutation();
   const [deleteZone, { isLoading: isDeleting }] = useDeleteZoneMutation();
   const [updateZone, { isLoading: isUpdating }] = useUpdateZoneMutation();
@@ -138,7 +140,7 @@ export default function Zones() {
     },
   ];
 
-  if (isLoadingZones || isFetchingZones) {
+  if (isLoadingZones || headerRefreshing) {
     return (
       <PageSkeleton
         statCards={0}

@@ -22,10 +22,11 @@ export default function Credit() {
 
   const [activeTab, setActiveTab] = useState<CreditTab>("all");
 
-  const { filteredRequests, pendingCount, isLoading, isFetching } = useCreditData(
+  const { filteredRequests, pendingCount, isLoading } = useCreditData(
     distributorId,
     activeTab,
   );
+  const headerRefreshing = useAppSelector((s) => s.ui.headerRefreshing);
 
   const {
     handleApproveReject,
@@ -129,7 +130,7 @@ export default function Credit() {
     if (ok) closeDelete();
   };
 
-  if (isLoading || isFetching) {
+  if (isLoading || headerRefreshing) {
     return (
       <PageSkeleton
         statCards={0}

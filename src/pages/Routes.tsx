@@ -93,9 +93,9 @@ export default function Routes() {
   // ============================================================
   //  ROUTES — existing API logic (unchanged)
   // ============================================================
-  const { data: zones = [], isLoading: isLoadingZones, isFetching: isFetchingZones } = useGetZonesQuery();
+  const { data: zones = [], isLoading: isLoadingZones } = useGetZonesQuery();
 
-  const { data: orderBookers = [], isLoading: isLoadingOB, isFetching: isFetchingOB } =
+  const { data: orderBookers = [], isLoading: isLoadingOB } =
     useGetOrderBookersByDistributorQuery({
       distributor_id: distributorId,
     });
@@ -104,17 +104,18 @@ export default function Routes() {
   });
 
   const [zoneId, setZoneId] = useState<number | undefined>();
-  const { data: routes = [], isLoading, isFetching } = useGetRoutesQuery(
+  const { data: routes = [], isLoading } = useGetRoutesQuery(
     zoneId
       ? { filterType: "zone", filterId: zoneId }
       : { filterType: "distributor", filterId: distributorId },
   );
-  const { data: distributorRoutes = [], isFetching: isFetchingDistributorRoutes } = useGetRoutesQuery({
+  const { data: distributorRoutes = [] } = useGetRoutesQuery({
     filterType: "distributor",
     filterId: distributorId,
   });
 
-  const isPageLoading = isLoadingZones || isLoadingOB || isLoading || isFetchingZones || isFetchingOB || isFetching;
+  const headerRefreshing = useAppSelector((s) => s.ui.headerRefreshing);
+  const isPageLoading = isLoadingZones || isLoadingOB || isLoading || headerRefreshing;
 
   const [createRoute, { isLoading: isCreating }] = useCreateRouteMutation();
   const [updateRoute, { isLoading: isUpdating }] = useUpdateRouteMutation();

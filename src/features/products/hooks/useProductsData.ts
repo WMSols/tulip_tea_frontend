@@ -41,6 +41,7 @@ export const useProductsData = (
   return {
     products,
     stats,
-    isLoading: isLoading || isFetching,
+    /** Initial load only so refetches don't show skeleton */
+    isLoading,
   };
 };

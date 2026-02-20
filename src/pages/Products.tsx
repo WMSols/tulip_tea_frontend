@@ -5,6 +5,7 @@ import ProductsTable from "@/features/products/components/ProductsTable";
 import ProductFormDialog from "@/features/products/components/ProductFormDialog";
 import { PageSkeleton } from "@/components/dashboard/PageSkeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useAppSelector } from "@/Redux/Hooks/hooks";
 import {
   useProductsData,
   type ProductViewFilter,
@@ -14,6 +15,7 @@ import { useProductDialog } from "@/features/products/hooks/useProductDialog";
 
 export default function Products() {
   const [view, setView] = useState<ProductViewFilter>("all");
+  const headerRefreshing = useAppSelector((s) => s.ui.headerRefreshing);
 
   // Fetch data (include_inactive and filtered list by view)
   const { products, stats, isLoading } = useProductsData({ view });
@@ -59,7 +61,7 @@ export default function Products() {
     await handleDeleteProduct(product.id);
   };
 
-  if (isLoading) {
+  if (isLoading || headerRefreshing) {
     return (
       <PageSkeleton
         statCards={3}

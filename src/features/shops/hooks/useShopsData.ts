@@ -41,6 +41,7 @@ export function useShopsData() {
     zones,
     zoneMap,
     stats,
-    isLoading: isLoading || isLoadingZones || isFetching || isFetchingZones,
+    /** Initial load only so refetches don't show skeleton */
+    isLoading: isLoading || isLoadingZones,
   };
 }

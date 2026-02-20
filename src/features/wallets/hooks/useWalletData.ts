@@ -49,10 +49,11 @@ export const useWalletData = (): UseWalletDataReturn => {
     wallets,
     transactions,
     stats,
+    /** Initial load only so refetches don't show skeleton */
     loading: {
-      balance: isLoadingBalance || isFetchingBalance,
-      wallets: isLoadingWallets || isFetchingWallets,
-      transactions: isLoadingTransactions || isFetchingTransactions,
+      balance: isLoadingBalance,
+      wallets: isLoadingWallets,
+      transactions: isLoadingTransactions,
     },
     distributorId,
   };

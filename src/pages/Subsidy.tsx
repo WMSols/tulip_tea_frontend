@@ -26,6 +26,7 @@ import { DataTable } from "@/components/dashboard/DataTable";
 import { StatusBadge } from "@/components/dashboard/StatusBadge";
 import { StatCardSkeleton } from "@/components/dashboard/StatCardSkeleton";
 import { useToast } from "@/hooks/use-toast";
+import { useAppSelector } from "@/Redux/Hooks/hooks";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import type { PendingSubsidyOrderDto } from "@/types/subsidy";
@@ -56,7 +57,8 @@ function subsidyStatusBadge(status: string) {
 // --- Component ---
 export default function Subsidy() {
   const { toast } = useToast();
-  const { data: subsidies = [], isLoading, isFetching } = useGetPendingSubsidyApprovalQuery();
+  const headerRefreshing = useAppSelector((s) => s.ui.headerRefreshing);
+  const { data: subsidies = [], isLoading } = useGetPendingSubsidyApprovalQuery();
   const [approveSubsidy, { isLoading: approving }] = useApproveSubsidyMutation();
   const [rejectSubsidy, { isLoading: rejecting }] = useRejectSubsidyMutation();
 
@@ -165,7 +167,7 @@ export default function Subsidy() {
       </div>
 
       {/* Stats — derived from pending subsidy orders */}
-      {(isLoading || isFetching) ? (
+      {(isLoading || headerRefreshing) ? (
         <StatCardSkeleton count={4} columns={4} />
       ) : (
         (() => {
@@ -250,7 +252,7 @@ export default function Subsidy() {
       )}
 
       {/* Table */}
-      {(isLoading || isFetching) ? (
+      {(isLoading || headerRefreshing) ? (
         <div className="space-y-3">
           {[1, 2, 3, 4].map((i) => (
             <Skeleton key={i} className="h-16 w-full rounded-xl" />

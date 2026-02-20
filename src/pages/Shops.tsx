@@ -33,19 +33,19 @@ export default function Shops() {
   const [deleteShop, { isLoading: isDeleting }] = useDeleteShopMutation();
 
   // Order bookers for reassignment
-  const { data: orderBookers = [], isLoading: isLoadingOB, isFetching: isFetchingOB } =
+  const { data: orderBookers = [], isLoading: isLoadingOB } =
     useGetOrderBookersByDistributorQuery({
       distributor_id: distributorId,
     });
 
   // Routes for filtering
-  const { data: routes = [], isLoading: isLoadingRoutes, isFetching: isFetchingRoutes } = useGetRoutesQuery({
+  const { data: routes = [], isLoading: isLoadingRoutes } = useGetRoutesQuery({
     filterType: "distributor",
     filterId: distributorId,
   });
 
-  // Combined loading: wait for all data (including refetch) before showing page
-  const isPageLoading = isLoading || isLoadingOB || isLoadingRoutes || isFetchingOB || isFetchingRoutes;
+  const headerRefreshing = useAppSelector((s) => s.ui.headerRefreshing);
+  const isPageLoading = isLoading || isLoadingOB || isLoadingRoutes || headerRefreshing;
 
   // Filtering logic
   const {

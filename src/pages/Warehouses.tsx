@@ -28,8 +28,8 @@ export default function Warehouses() {
     isLoadingZones,
   } = useWarehousesData(distributorId);
 
-  // Combined loading: wait for all dependent data before showing page
-  const isPageLoading = isLoading || isLoadingZones;
+  const headerRefreshing = useAppSelector((s) => s.ui.headerRefreshing);
+  const isPageLoading = isLoading || isLoadingZones || headerRefreshing;
 
   // Actions
   const {

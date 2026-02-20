@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { useLocation } from "react-router-dom";
 import { User, ChevronDown, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -12,6 +11,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useAppSelector, useAppDispatch } from "@/Redux/Hooks/hooks";
 import { logout } from "@/Redux/Slices/authSlice";
+import { setHeaderRefreshing } from "@/Redux/Slices/uiSlice";
 import { baseApi } from "@/Redux/Api/baseApi";
 
 /** Tags to invalidate per route so refetch shows loading/skeleton on that page */
@@ -38,7 +38,7 @@ export function DashboardNavbar({ onMenuClick, pageTitle }: NavbarProps) {
   const dispatch = useAppDispatch();
   const location = useLocation();
   const { name, role } = useAppSelector((s) => s.auth.user);
-  const [isRefreshing, setIsRefreshing] = useState(false);
+  const isRefreshing = useAppSelector((s) => s.ui.headerRefreshing);
 
   const handleLogout = () => {
     dispatch(logout());
@@ -47,13 +47,13 @@ export function DashboardNavbar({ onMenuClick, pageTitle }: NavbarProps) {
   const handleRefresh = () => {
     const tags = REFRESH_TAGS_BY_PATH[location.pathname];
     if (!tags?.length) return;
-    setIsRefreshing(true);
+    dispatch(setHeaderRefreshing(true));
     dispatch(
       baseApi.util.invalidateTags(
         tags as Parameters<typeof baseApi.util.invalidateTags>[0],
       ),
     );
-    setTimeout(() => setIsRefreshing(false), 1500);
+    setTimeout(() => dispatch(setHeaderRefreshing(false)), 1500);
   };
 
   const canRefresh = (REFRESH_TAGS_BY_PATH[location.pathname]?.length ?? 0) > 0;

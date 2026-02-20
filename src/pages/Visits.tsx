@@ -1,5 +1,6 @@
 import { useEffect, useMemo } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { useAppSelector } from "@/Redux/Hooks/hooks";
 import { useGetZonesQuery } from "@/Redux/Api/zonesApi";
 import { useVisitsData } from "@/features/visits/hooks/useVisitsData";
 import { useVisitFilters } from "@/features/visits/hooks/useVisitFilters";
@@ -23,6 +24,7 @@ export default function Visits() {
 
   // Data fetching and transformation
   const { rows, isLoading, isError } = useVisitsData();
+  const headerRefreshing = useAppSelector((s) => s.ui.headerRefreshing);
 
   // Zones for filter names and display
   const { data: zones = [] } = useGetZonesQuery();
@@ -69,7 +71,7 @@ export default function Visits() {
     }
   }, [isError, toast]);
 
-  if (isLoading) {
+  if (isLoading || headerRefreshing) {
     return (
       <PageSkeleton
         statCards={3}

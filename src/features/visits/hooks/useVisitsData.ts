@@ -102,7 +102,8 @@ export function useVisitsData() {
     return all;
   }, [shopVisits, deliveries]);
 
-  const isLoading = isLoadingShopVisits || isLoadingDeliveries || isFetchingShopVisits || isFetchingDeliveries;
+  /** Initial load only so refetches don't show skeleton */
+  const isLoading = isLoadingShopVisits || isLoadingDeliveries;
   const isError = isShopVisitsError || isDeliveriesError;
 
   return { rows, isLoading, isError };

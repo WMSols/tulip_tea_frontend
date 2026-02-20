@@ -36,6 +36,7 @@ export const useCreditData = (
     data,
     filteredRequests,
     pendingCount,
+    /** True only on initial load (no cached data). Use with headerRefreshing for skeleton. */
     isLoading,
     isFetching,
   };

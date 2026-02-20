@@ -92,19 +92,20 @@ export default function Staff() {
 
   /* ------------------- API ------------------- */
 
-  const { data: zones = [], isLoading: isLoadingZones, isFetching: isFetchingZones } = useGetZonesQuery();
+  const { data: zones = [], isLoading: isLoadingZones } = useGetZonesQuery();
 
-  const { data: orderBookers = [], isLoading: isLoadingOB, isFetching: isFetchingOB } =
+  const { data: orderBookers = [], isLoading: isLoadingOB } =
     useGetOrderBookersByDistributorQuery({
       distributor_id: distributorId,
     });
 
-  const { data: deliveryMen = [], isLoading: isLoadingDM, isFetching: isFetchingDM } =
+  const { data: deliveryMen = [], isLoading: isLoadingDM } =
     useGetDeliveryMenByDistributorQuery({
       distributor_id: distributorId,
     });
 
-  const isPageLoading = isLoadingZones || isLoadingOB || isLoadingDM || isFetchingZones || isFetchingOB || isFetchingDM;
+  const headerRefreshing = useAppSelector((s) => s.ui.headerRefreshing);
+  const isPageLoading = isLoadingZones || isLoadingOB || isLoadingDM || headerRefreshing;
 
   /* ------------------- API HOOKS WITH LOADING STATES ------------------- */
   const [createOrderBooker, { isLoading: isCreatingOB }] =

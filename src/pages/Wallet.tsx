@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Wallet as WalletIcon, Receipt } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { useAppSelector } from "@/Redux/Hooks/hooks";
 
 // Feature hooks
 import { useWalletData } from "@/features/wallets/hooks/useWalletData";
@@ -24,9 +25,9 @@ export default function Wallet() {
 
   // Data
   const { wallets, transactions, stats, loading } = useWalletData();
+  const headerRefreshing = useAppSelector((s) => s.ui.headerRefreshing);
 
-  // Combined loading: wait for all wallet data before showing page
-  const isPageLoading = loading.balance || loading.wallets || loading.transactions;
+  const isPageLoading = loading.balance || loading.wallets || loading.transactions || headerRefreshing;
 
   // Collect action
   const { handleCollect, isCollecting } = useWalletActions();

@@ -10,7 +10,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import type { VisitRow } from "../../types";
-import type { OrderDto } from "@/types/visits";
+import type { DailyCollectionDto, OrderDto } from "@/types/visits";
 import { formatDateTime } from "../../utils/formatters";
 import {
   zoneLabel,
@@ -23,6 +23,7 @@ import { PhotosSection } from "./PhotosSection";
 import { ShopVisitCard } from "./ShopVisitCard";
 import { DeliveryCard } from "./DeliveryCard";
 import { OrderDetailsSection } from "./OrderDetailsSection";
+import { CollectionCard } from "./CollectionCard";
 
 interface VisitDetailsDialogProps {
   isOpen: boolean;
@@ -31,6 +32,9 @@ interface VisitDetailsDialogProps {
   orderData: OrderDto | undefined;
   isOrderFetching: boolean;
   isOrderError: boolean;
+  collectionData?: DailyCollectionDto | null;
+  isCollectionFetching?: boolean;
+  isCollectionError?: boolean;
   zoneMap?: Record<number, string>;
 }
 
@@ -41,6 +45,9 @@ export function VisitDetailsDialog({
   orderData,
   isOrderFetching,
   isOrderError,
+  collectionData,
+  isCollectionFetching = false,
+  isCollectionError = false,
   zoneMap = {},
 }: VisitDetailsDialogProps) {
   if (!visit) return null;
@@ -135,6 +142,26 @@ export function VisitDetailsDialog({
               <ShopVisitCard visit={visit} />
             ) : (
               <DeliveryCard delivery={visit} />
+            )}
+
+            {/* Daily Collection (when visit has collection_id) */}
+            {visit.kind === "shop_visit" && visit.collection_id != null && (
+              <>
+                {isCollectionFetching && (
+                  <p className="text-sm text-muted-foreground">
+                    Loading collection...
+                  </p>
+                )}
+                {isCollectionError && (
+                  <p className="text-sm text-destructive">
+                    Failed to load collection.
+                  </p>
+                )}
+                {collectionData &&
+                  collectionData.id === visit.collection_id && (
+                    <CollectionCard collection={collectionData} />
+                  )}
+              </>
             )}
 
             {/* Photos Section */}

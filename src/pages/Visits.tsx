@@ -56,6 +56,9 @@ export default function Visits() {
     orderData,
     isOrderFetching,
     isOrderError,
+    collectionData,
+    isCollectionFetching,
+    isCollectionError,
     handleViewDetails,
     handleCloseDialog,
   } = useVisitDetails();
@@ -119,6 +122,9 @@ export default function Visits() {
         orderData={orderData}
         isOrderFetching={isOrderFetching}
         isOrderError={isOrderError}
+        collectionData={collectionData}
+        isCollectionFetching={isCollectionFetching}
+        isCollectionError={isCollectionError}
         zoneMap={zoneMap}
       />
     </div>

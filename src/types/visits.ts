@@ -152,3 +152,25 @@ export interface OrderItemDto {
   unit_price: number;
   total_price: number;
 }
+
+/** GET /daily-collections/{collection_id} */
+export interface DailyCollectionDto {
+  id: number;
+  shop_id: number;
+  shop_name: string;
+  shop_owner: string;
+  order_id: number;
+  collected_by_order_booker: number;
+  order_booker_name: string;
+  collected_by_delivery_man: number;
+  delivery_man_name: string;
+  verified_by_distributor: number;
+  amount: number;
+  status: string;
+  visit_id: number;
+  collection_date: string;
+  photo_proof: string | null;
+  shop_outstanding_balance: number;
+  shop_credit_limit: number;
+  shop_available_credit: number;
+}

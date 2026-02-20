@@ -54,6 +54,7 @@ export const baseApi = createApi({
     "ShopVisits",
     "Deliveries",
     "Orders",
+    "DailyCollections",
     "Wallets",
     "WalletBalance",
     "WalletTransactions",

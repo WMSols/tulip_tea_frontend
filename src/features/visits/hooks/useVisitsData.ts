@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { useAppSelector } from "@/Redux/Hooks/hooks";
 import type { DeliveryDto, ShopVisitDto } from "@/types/visits";
 import type { VisitRow, ShopVisitRow } from "../types";
 import { getVisitTime } from "../utils/helpers";
@@ -6,12 +7,14 @@ import {
   useGetDeliveriesByDistributorQuery,
   useGetShopVisitsAllQuery,
 } from "@/Redux/Api/visitsApi";
-import { VISITS_QUERY_LIMIT, DEFAULT_DISTRIBUTOR_ID } from "../utils/constants";
+import { VISITS_QUERY_LIMIT } from "../utils/constants";
 
 /**
  * Hook to fetch and transform visits data
  */
 export function useVisitsData() {
+  const distributorId = useAppSelector((s) => s.auth.user?.id ?? null);
+
   const {
     data: shopVisits = [],
     isLoading: isLoadingShopVisits,
@@ -24,10 +27,13 @@ export function useVisitsData() {
     isLoading: isLoadingDeliveries,
     isFetching: isFetchingDeliveries,
     isError: isDeliveriesError,
-  } = useGetDeliveriesByDistributorQuery({
-    distributorId: DEFAULT_DISTRIBUTOR_ID,
-    limit: VISITS_QUERY_LIMIT,
-  });
+  } = useGetDeliveriesByDistributorQuery(
+    {
+      distributorId: distributorId ?? 0,
+      limit: VISITS_QUERY_LIMIT,
+    },
+    { skip: distributorId == null }
+  );
 
   const rows: VisitRow[] = useMemo(() => {
     const svRows: VisitRow[] = (shopVisits ?? []).map((v: ShopVisitDto) => {

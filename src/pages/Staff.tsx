@@ -305,16 +305,6 @@ export default function Staff() {
         <span className="font-medium">{staff.zoneLabel}</span>
       ),
     },
-    {
-      key: "status",
-      label: "Status",
-      render: (staff: StaffMemberUI) => (
-        <StatusBadge
-          status={staff.status === "active" ? "success" : "neutral"}
-          label={staff.status === "active" ? "Active" : "Inactive"}
-        />
-      ),
-    },
   ];
 
   if (isPageLoading) {

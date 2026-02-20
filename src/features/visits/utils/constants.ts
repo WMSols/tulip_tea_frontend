@@ -7,6 +7,3 @@ export const TAB_OPTIONS: { value: ActiveTab; label: string }[] = [
 ];
 
 export const VISITS_QUERY_LIMIT = 1000;
-
-// TODO: Replace with auth-selected distributor ID
-export const DEFAULT_DISTRIBUTOR_ID = 1;

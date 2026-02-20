@@ -1,5 +1,10 @@
 import { baseApi } from "@/Redux/Api/baseApi";
-import type { DeliveryDto, OrderDto, ShopVisitDto } from "@/types/visits";
+import type {
+  DailyCollectionDto,
+  DeliveryDto,
+  OrderDto,
+  ShopVisitDto,
+} from "@/types/visits";
 
 export const fieldApi = baseApi.injectEndpoints({
   endpoints: (build) => ({
@@ -38,6 +43,16 @@ export const fieldApi = baseApi.injectEndpoints({
         { type: "Orders" as const, id: arg.orderId },
       ],
     }),
+
+    getDailyCollectionById: build.query<
+      DailyCollectionDto,
+      { collectionId: number }
+    >({
+      query: ({ collectionId }) => `daily-collections/${collectionId}`,
+      providesTags: (_result, _err, arg) => [
+        { type: "DailyCollections" as const, id: arg.collectionId },
+      ],
+    }),
   }),
   overrideExisting: false,
 });
@@ -46,4 +61,5 @@ export const {
   useGetShopVisitsAllQuery,
   useGetDeliveriesByDistributorQuery,
   useLazyGetOrderByIdQuery,
+  useLazyGetDailyCollectionByIdQuery,
 } = fieldApi;

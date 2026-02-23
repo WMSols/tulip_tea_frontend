@@ -55,8 +55,9 @@ import {
   validateForm,
   type FormErrors,
 } from "@/lib/validations";
-import { getDayName } from "@/types/weeklyRoutes";
+import { getDayName, WEEKLY_DAYS_MONDAY_FIRST } from "@/types/weeklyRoutes";
 import type {
+
   WeeklyRouteSchedule,
   CreateWeeklyRoutePayload,
   UpdateWeeklyRoutePayload,
@@ -74,8 +75,6 @@ interface RouteFormData {
   zone_id: string;
   order_booker_id: string;
 }
-
-const WEEKLY_DAYS = [0, 1, 2, 3, 4, 5, 6];
 
 function assigneeTypeBadge(type: string) {
   if (type === "order_booker")
@@ -262,7 +261,7 @@ export default function Routes() {
   const [wfAssigneeType, setWfAssigneeType] = useState("order_booker");
   const [wfAssigneeId, setWfAssigneeId] = useState("");
   const [wfRouteId, setWfRouteId] = useState("");
-  const [wfDayOfWeek, setWfDayOfWeek] = useState("1");
+  const [wfDayOfWeek, setWfDayOfWeek] = useState("0");
   const [wfIsActive, setWfIsActive] = useState(true);
 
   // Generate visit tasks dialog
@@ -283,7 +282,7 @@ export default function Routes() {
       setWfAssigneeType("order_booker");
       setWfAssigneeId("");
       setWfRouteId("");
-      setWfDayOfWeek("1");
+      setWfDayOfWeek("0");
       setWfIsActive(true);
     }
   }, [editSchedule, weeklyFormOpen]);
@@ -354,8 +353,13 @@ export default function Routes() {
         description: res.message || `Generated ${res.tasks_generated} tasks, skipped ${res.tasks_skipped} duplicates.`,
       });
       setIsGenerateTasksOpen(false);
-    } catch {
-      toast({ title: "Something went wrong", variant: "destructive" });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description:
+          error?.data?.detail || "Failed to generate visit tasks.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -898,7 +902,7 @@ export default function Routes() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-card border-border">
-                  {WEEKLY_DAYS.map((d) => (
+                  {WEEKLY_DAYS_MONDAY_FIRST.map((d) => (
                     <SelectItem key={d} value={String(d)}>
                       {getDayName(d)}
                     </SelectItem>

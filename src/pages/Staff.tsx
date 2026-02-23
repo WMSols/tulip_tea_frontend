@@ -256,10 +256,11 @@ export default function Staff() {
         description: "Staff member removed successfully.",
         variant: "destructive",
       });
-    } catch {
+    } catch (err: any) {
       toast({
         title: "Error",
-        description: "Failed to remove staff.",
+        description:
+          err?.data?.detail || err?.data?.message || "Failed to remove staff.",
         variant: "destructive",
       });
     }

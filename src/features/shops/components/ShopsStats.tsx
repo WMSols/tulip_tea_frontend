@@ -1,4 +1,4 @@
-import { formatCurrencyCompact } from "../utils/formatters";
+import { formatCurrency } from "../utils/formatters";
 
 interface ShopsStatsProps {
   totalCount: number;
@@ -29,7 +29,7 @@ export function ShopsStats({
       </div>
       <div className="stat-card">
         <p className="text-2xl font-bold">
-          {formatCurrencyCompact(totalOutstanding)}
+          {formatCurrency(totalOutstanding)}
         </p>
         <p className="text-sm text-muted-foreground">Outstanding</p>
       </div>

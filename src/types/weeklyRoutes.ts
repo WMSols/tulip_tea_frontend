@@ -37,16 +37,30 @@ export interface GenerateVisitTasksResponse {
   tasks_skipped: number;
 }
 
-const DAYS_OF_WEEK = [
-  "Sunday",
+/** 0 = Monday, 1 = Tuesday, ... 6 = Sunday (ISO-style, for getDayName / API) */
+const DAY_NAMES_BY_INDEX = [
   "Monday",
   "Tuesday",
   "Wednesday",
   "Thursday",
   "Friday",
   "Saturday",
+  "Sunday",
 ];
 
+/** Monday first, Sunday last — use for dropdown order */
+const DAYS_OF_WEEK = [
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+  "Sunday",
+];
+
+export const WEEKLY_DAYS_MONDAY_FIRST: number[] = [0, 1, 2, 3, 4, 5, 6];
+
 export function getDayName(day: number): string {
-  return DAYS_OF_WEEK[day] ?? `Day ${day}`;
+  return DAY_NAMES_BY_INDEX[day] ?? `Day ${day}`;
 }

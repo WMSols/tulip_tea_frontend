@@ -14,6 +14,7 @@ import { ShopsTable } from "@/features/shops/components/ShopsTable";
 import { ViewDialog } from "@/features/shops/components/ShopDialogs/ViewDialog";
 import { EditDialog } from "@/features/shops/components/ShopDialogs/EditDialog";
 import { ReassignDialog } from "@/features/shops/components/ShopDialogs/ReassignDialog";
+import { RejectShopDialog } from "@/features/shops/components/ShopDialogs/RejectShopDialog";
 import { PageSkeleton } from "@/components/dashboard/PageSkeleton";
 
 /**
@@ -74,12 +75,18 @@ export default function Shops() {
     isViewDialogOpen,
     isEditDialogOpen,
     isReassignDialogOpen,
+    isRejectDialogOpen,
     selectedShop,
+    rejectTargetShop,
+    rejectionReason,
+    setRejectionReason,
     selectedOrderBookerId,
     setSelectedOrderBookerId,
     handleViewShop,
     handleEditShop,
     handleReassignShop,
+    openRejectDialog,
+    closeRejectDialog,
     closeViewDialog,
     closeEditDialog,
     closeReassignDialog,
@@ -90,9 +97,17 @@ export default function Shops() {
     handleApprove(shopId, closeViewDialog);
   };
 
-  // Wrapper for reject with dialog close
-  const handleRejectWithClose = (shopId: number) => {
-    handleReject(shopId, closeViewDialog);
+  // Open reject modal (required reason will be entered there)
+  const handleRejectClick = (shop: import("@/features/shops/types").UiShop) => {
+    openRejectDialog(shop);
+  };
+
+  const handleRejectConfirm = async (remarks: string) => {
+    if (!rejectTargetShop) return;
+    await handleReject(rejectTargetShop.id, remarks, () => {
+      closeRejectDialog();
+      closeViewDialog();
+    });
   };
 
   // Wrapper for reassign with dialog close
@@ -157,7 +172,7 @@ export default function Shops() {
         isDeleting={isDeleting}
         onView={handleViewShop}
         onApprove={handleApproveWithClose}
-        onReject={handleRejectWithClose}
+        onReject={handleRejectClick}
         onReassign={handleReassignShop}
         onDelete={handleDeleteShop}
       />
@@ -167,7 +182,17 @@ export default function Shops() {
         onClose={closeViewDialog}
         shop={selectedShop}
         onApprove={handleApproveWithClose}
-        onReject={handleRejectWithClose}
+        onReject={handleRejectClick}
+      />
+
+      <RejectShopDialog
+        isOpen={isRejectDialogOpen}
+        onClose={closeRejectDialog}
+        shop={rejectTargetShop}
+        rejectionReason={rejectionReason}
+        onRejectionReasonChange={setRejectionReason}
+        onConfirm={handleRejectConfirm}
+        isRejecting={isVerifying}
       />
 
       <EditDialog

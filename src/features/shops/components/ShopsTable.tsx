@@ -15,7 +15,7 @@ interface ShopsTableProps {
   isDeleting: boolean;
   onView: (shop: UiShop) => void;
   onApprove: (shopId: number) => void;
-  onReject: (shopId: number) => void;
+  onReject: (shop: UiShop) => void;
   onReassign: (shop: UiShop) => void;
   onDelete: (shopId: number) => void;
 }
@@ -127,7 +127,7 @@ export function ShopsTable({
                 variant="ghost"
                 size="icon"
                 disabled={isVerifying}
-                onClick={() => onReject(shop.id)}
+                onClick={() => onReject(shop)}
               >
                 {isVerifying ? (
                   <span className="h-4 w-4 animate-spin rounded-full border-2 border-destructive border-t-transparent" />

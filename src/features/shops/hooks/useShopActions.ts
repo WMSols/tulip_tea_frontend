@@ -1,10 +1,8 @@
-import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import {
   useVerifyShopMutation,
   useReassignShopMutation,
 } from "@/Redux/Api/shopsApi";
-import { REJECTION_REASON } from "../utils/constants";
 
 /**
  * Hook to manage shop actions (approve, reject, reassign)
@@ -38,14 +36,18 @@ export function useShopActions(distributorId: number) {
     }
   };
 
-  const handleReject = async (shopId: number, onSuccess?: () => void) => {
+  const handleReject = async (
+    shopId: number,
+    remarks: string,
+    onSuccess?: () => void,
+  ) => {
     try {
       await verifyShop({
         shop_id: shopId,
         distributor_id: distributorId,
         body: {
           registration_status: "rejected",
-          remarks: REJECTION_REASON,
+          remarks: remarks.trim(),
         },
       }).unwrap();
 

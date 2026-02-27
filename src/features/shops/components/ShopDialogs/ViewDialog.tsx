@@ -22,7 +22,7 @@ interface ViewDialogProps {
   onClose: () => void;
   shop: UiShop | null;
   onApprove: (shopId: number) => void;
-  onReject: (shopId: number) => void;
+  onReject: (shop: UiShop) => void;
 }
 
 export function ViewDialog({
@@ -225,7 +225,7 @@ export function ViewDialog({
             <>
               <Button
                 variant="outline"
-                onClick={() => onReject(shop.id)}
+                onClick={() => onReject(shop)}
                 className="text-destructive"
               >
                 Reject
